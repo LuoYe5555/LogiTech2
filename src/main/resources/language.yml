@@ -510,6 +510,11 @@ zh_CN:
       Name: '虚拟世界'
       Lore:
         - '诞生自ERROR的世界'
+    CHARGING_BENCH:
+      Name: '充电台'
+      Lore:
+        - '无实效之物'
+        - '防止充能塔之无法合成'
     ENTITY_FEAT:
       Name: '生物特征'
       Lore:

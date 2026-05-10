@@ -60,8 +60,8 @@ public class MyAddon extends JavaPlugin implements SlimefunAddon {
     public static SupportedPluginManager supportedPluginManager;
 
     static {
-        username = "lyen";
-        repo = "LogiTech2";
+        username = "m1919810";
+        repo = "LogiTech";
         branch = "master";
     }
 

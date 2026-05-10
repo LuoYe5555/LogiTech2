@@ -491,6 +491,14 @@ public class AddItem {
             Theme.ITEM1,
             get("Items.VIRTUALWORLD.Name"),
             getList("Items.VIRTUALWORLD.Lore"));
+
+    public static final SlimefunItemStack CHARGING_BENCH = themed(
+            "CHARGING_BENCH",
+            Material.CRAFTING_TABLE,
+            Theme.ITEM1,
+            get("Items.CHARGING_BENCH.Name"),
+            getList("Items.CHARGING_BENCH.Lore"));
+
     public static final SlimefunItemStack SAMPLE_SPAWNER = themed(
             "SAMPLE_SPAWNER",
             Material.SPAWNER,
@@ -1079,12 +1087,6 @@ public class AddItem {
             Theme.MACHINE1,
             get("Machines.TIMER_SF.Name"),
             getList("Machines.TIMER_SF.Lore"));
-    public static final SlimefunItemStack SOLAR_REACTOR_SIMULATOR = themed(
-            "SOLAR_REACTOR_SIMULATOR",
-            Material.LODESTONE,
-            Theme.MULTIBLOCK2,
-            get("Machines.SOLAR_REACTOR_SIMULATOR.Name"),
-            getList("Machines.SOLAR_REACTOR_SIMULATOR.Lore"));
     //    public static final SlimefunItemStack TIMER_SF_SEQ=themed("TIMER_SF_SEQ",Material.SOUL_TORCH,Theme.MACHINE1,
     //            get("Machines.TIMER_SF_SEQ.Name"),getList("Machines.TIMER_SF_SEQ.Lore"));
     // manuals
@@ -1651,6 +1653,15 @@ public class AddItem {
             Theme.MULTIBLOCK2,
             get("MultiBlock.SOLAR_OUTPUT.Name"),
             getList("MultiBlock.SOLAR_OUTPUT.Lore"));
+
+    //超新星-模拟器
+    public static final SlimefunItemStack SOLAR_REACTOR_SIMULATOR = themed(
+            "SOLAR_REACTOR_SIMULATOR",
+            Material.LODESTONE,
+            Theme.MACHINE1,
+            get("Machines.SOLAR_REACTOR_SIMULATOR.Name"),
+            getList("Machines.SOLAR_REACTOR_SIMULATOR.Lore"));
+
     public static final SlimefunItemStack TRANSMUTATOR_FRAME = themed(
             "TRANSMUTATOR_FRAME",
             Material.SMOOTH_STONE,

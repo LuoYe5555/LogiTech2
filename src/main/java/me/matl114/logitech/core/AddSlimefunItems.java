@@ -1367,6 +1367,24 @@ public class AddSlimefunItems {
                     null)
             .register();
 
+    public static final SlimefunItem CHARGING_BENCH = new MaterialItem(
+            MATERIAL,
+            AddItem.CHARGING_BENCH,
+            ENHANCED_CRAFTING_TABLE,
+            recipe(
+                    AddItem.BUG,
+                    "ELECTRO_MAGNET",
+                    AddItem.BUG,
+                    "BATTERY",
+                    "CHARGING_BENCH",
+                    "BATTERY",
+                    AddItem.BUG,
+                    "SMALL_CAPACITOR",
+                    AddItem.BUG
+            ),
+            null)
+            .register();
+
     public static final SlimefunItem WITHERPROOF_REDSTONE = new WitherProofBlock(
                     VANILLA,
                     AddItem.WITHERPROOF_REDSTONE,
@@ -2577,7 +2595,7 @@ public class AddSlimefunItems {
                             AddItem.NOLOGIC,
                             AddItem.ABSTRACT_INGOT,
                             AddItem.NOLOGIC,
-                            "CHARGING_BENCH",
+                            AddItem.CHARGING_BENCH,
                             AddItem.NOLOGIC,
                             AddItem.ABSTRACT_INGOT,
                             AddItem.ENERGY_PIPE,
@@ -4869,6 +4887,79 @@ public class AddSlimefunItems {
                     false,
                     false)
             .register();
+
+    // 超新星-模拟器
+    public static final SlimefunItem SOLAR_REACTOR_SIMULATOR = new RecipeMachine(
+                SPACE,
+                AddItem.SOLAR_REACTOR_SIMULATOR,
+                COMMON_TYPE,
+                recipe(setC(AddItem.LENGSHANG,16),setC(AddItem.SOLAR_REACTOR_FRAME,24),setC(AddItem.SOLAR_REACTOR_GLASS,16),setC(AddItem.SOLAR_REACTOR_GLASS,16),setC(AddItem.SOLAR_REACTOR_FRAME,24),setC(AddItem.LYEN,16),
+                        setC(AddItem.SOLAR_REACTOR_FRAME,24),setC(AddItem.SOLAR_REACTOR_FRAME,24),setC(AddItem.SOLAR_REACTOR_GLASS,16),setC(AddItem.SOLAR_REACTOR_GLASS,16),setC(AddItem.SOLAR_REACTOR_FRAME,24),setC(AddItem.SOLAR_REACTOR_FRAME,24),
+                        setC(AddItem.SOLAR_REACTOR_GLASS,16),setC(AddItem.SOLAR_REACTOR_GLASS,16),AddItem.SOLAR_REACTOR,AddItem.SOLAR_REACTOR,setC(AddItem.SOLAR_REACTOR_GLASS,16),setC(AddItem.SOLAR_REACTOR_GLASS,16),
+                        setC(AddItem.SOLAR_REACTOR_GLASS,16),setC(AddItem.SOLAR_REACTOR_GLASS,16),AddItem.SOLAR_REACTOR,AddItem.SOLAR_REACTOR,setC(AddItem.SOLAR_REACTOR_GLASS,16),setC(AddItem.SOLAR_REACTOR_GLASS,16),
+                        setC(AddItem.SOLAR_REACTOR_FRAME,24),setC(AddItem.SOLAR_REACTOR_FRAME,24),setC(AddItem.SOLAR_REACTOR_GLASS,16),setC(AddItem.SOLAR_REACTOR_GLASS,16),setC(AddItem.SOLAR_REACTOR_FRAME,24),setC(AddItem.SOLAR_REACTOR_FRAME,24),
+                        setC(AddItem.LYEN,16),setC(AddItem.SOLAR_REACTOR_FRAME,24),setC(AddItem.SOLAR_REACTOR_GLASS,16),setC(AddItem.SOLAR_REACTOR_GLASS,16),setC(AddItem.SOLAR_REACTOR_FRAME,24),setC(AddItem.LENGSHANG,16)),
+                150,
+                5_200_000,
+                1_500_000,
+                mkMp(
+                        mkP(
+                                mkl(AddItem.METAL_CORE),
+                                mkl(
+                                        setC(AddItem.STAR_GOLD_INGOT, 18),
+                                        probItemStackFactory(AddItem.LSINGULARITY, 73),
+                                        randAmountItemFactory(AddItem.STAR_GOLD, 39, 87),
+                                        randAmountItemFactory(AddItem.ATOM_INGOT, 63, 99),
+                                        randItemStackFactory(
+                                                Utils.list(
+                                                        setC(AddItem.PALLADIUM_INGOT, 4),
+                                                        setC(AddItem.PLATINUM_INGOT, 4),
+                                                        setC(AddItem.CADMIUM_INGOT, 4),
+                                                        setC(AddItem.BISMUTH_INGOT, 4)),
+                                                Utils.list(37, 29, 13, 21)))),
+                        75,
+                        mkP(
+                                mkl(AddItem.SMELERY_CORE),
+                                mkl(
+                                        setC(AddItem.ABSTRACT_INGOT, 64),
+                                        probItemStackFactory(AddItem.LSINGULARITY, 12),
+                                        randAmountItemFactory(AddItem.DIMENSIONAL_SHARD, 99, 127),
+                                        randAmountItemFactory(AddItem.STAR_GOLD, 49, 83),
+                                        randAmountItemFactory(AddItem.ATOM_INGOT, 37, 51),
+                                        randItemStackFactory(
+                                                Utils.list(
+                                                        setC(AddItem.PALLADIUM_INGOT, 4),
+                                                        setC(AddItem.PLATINUM_INGOT, 4),
+                                                        setC(AddItem.CADMIUM_INGOT, 4),
+                                                        setC(AddItem.BISMUTH_INGOT, 4)),
+                                                Utils.list(2, 59, 13, 24)))),
+                        75,
+                        mkP(
+                                mkl(AddItem.MASS_CORE),
+                                mkl(
+                                        setC(AddItem.BUG, 32),
+                                        probItemStackFactory(AddItem.LSINGULARITY, 97),
+                                        randAmountItemFactory(AddItem.DIMENSIONAL_SHARD, 73, 127),
+                                        randAmountItemFactory(AddItem.STAR_GOLD, 39, 63),
+                                        randAmountItemFactory(AddItem.ATOM_INGOT, 12, 39),
+                                        randItemStackFactory(
+                                                Utils.list(
+                                                        setC(AddItem.PALLADIUM_INGOT, 4),
+                                                        setC(AddItem.PLATINUM_INGOT, 4),
+                                                        setC(AddItem.CADMIUM_INGOT, 4),
+                                                        setC(AddItem.BISMUTH_INGOT, 4)),
+                                                Utils.list(27, 22, 15, 45)))),
+                        75,
+                        mkP(
+                            mkl(AddItem.TECH_CORE),
+                            mkl(
+                                    setC(AddItem.LPLATE, 64),
+                                    setC(AddItem.LSINGULARITY, 2),
+                                    randAmountItemFactory(AddItem.STAR_GOLD_INGOT, 23, 40),
+                                    randAmountItemFactory(AddItem.ATOM_INGOT, 92, 127))),
+                        75))
+            .register();
+
     public static final SlimefunItem TRANSMUTATOR_FRAME = new MultiPart(
                     ADVANCED,
                     AddItem.TRANSMUTATOR_FRAME,
