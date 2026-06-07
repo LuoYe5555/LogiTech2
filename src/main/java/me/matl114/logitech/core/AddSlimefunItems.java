@@ -2116,7 +2116,7 @@ public class AddSlimefunItems {
                         AddItem.LENGINE),
                 500_000,
                 50_000,
-                1)
+                64)
             .register();
     public static final SlimefunItem LVOID_GENERATOR = new TestGenerator(
                     ENERGY,

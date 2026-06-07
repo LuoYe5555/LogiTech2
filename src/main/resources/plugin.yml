@@ -27,7 +27,6 @@ depend:
 softdepend:
 - InfinityExpansion
 - Networks
-
 commands:
   logitech:
     description: basic logitech command

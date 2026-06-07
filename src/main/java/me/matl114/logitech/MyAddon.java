@@ -12,6 +12,7 @@ import me.matl114.logitech.core.Cargo.SpaceStorage.StorageSpace;
 import me.matl114.logitech.core.Cargo.Storages;
 import me.matl114.logitech.core.Depends.DependencyInfinity;
 import me.matl114.logitech.core.Depends.DependencyNetwork;
+
 import me.matl114.logitech.core.Depends.SupportedPluginManager;
 import me.matl114.logitech.core.Registries.AddDepends;
 import me.matl114.logitech.core.Registries.CustomEffects;

@@ -19,12 +19,16 @@ import me.matl114.logitech.ConfigLoader;
 import me.matl114.logitech.MyAddon;
 import me.matl114.logitech.core.AddItem;
 import me.matl114.logitech.core.AddSlimefunItems;
+import me.matl114.logitech.core.Registries.AddDepends;
 import me.matl114.logitech.core.Items.SpecialItems.EntityFeat;
 import me.matl114.logitech.core.Machines.Abstracts.AbstractMachine;
 import me.matl114.logitech.core.Machines.Abstracts.AbstractTransformer;
 import me.matl114.logitech.core.Machines.AutoMachines.AEMachine;
 import me.matl114.logitech.core.Machines.AutoMachines.EMachine;
 import me.matl114.logitech.core.Machines.AutoMachines.MTMachine;
+import me.matl114.logitech.core.Machines.Abstracts.AbstractRecipeMachine;
+import me.matl114.logitech.core.Machines.SpecialMachines.FinalVirtualKiller;
+import me.matl114.logitech.core.Machines.SpecialMachines.VirtualKiller;
 import me.matl114.logitech.utils.*;
 import me.matl114.logitech.utils.Algorithms.PairList;
 import me.matl114.logitech.utils.UtilClass.ItemClass.ProbItemStack;
@@ -1118,6 +1122,17 @@ public class RecipeSupporter {
      */
     private static boolean hasInit = false;
 
+    /**
+     * 判断机器是否是本附属的地理资源矿机
+     */
+    private static boolean isGeoResourceMachine(SlimefunItem item) {
+        if (item == null) {
+            return false;
+        }
+        // 只识别本附属的地理资源矿机
+        return item == AddDepends.INFINITY_GEOQURRY || item == AddDepends.ANNIHILATION_GEOQURRY;
+    }
+
     public static void initRecipeSupportor() {
         if (hasInit) {
             throw new RuntimeException("RecipeSupporter start register task before server start!! register abort");
@@ -1563,6 +1578,16 @@ public class RecipeSupporter {
                         Utils.recipe(
                                 "SEAGRASS", "SCUTE", AddUtils.probItemStackFactory(AddUtils.resolveItem("BOWL"), 5)));
                 put(EntityType.ZOMBIE_HORSE, Utils.recipe("SEAGRASS", "ROTTEN_FLESH"));
+                put(EntityType.BEE, Utils.recipe("HONEYCOMB", AddUtils.probItemStackFactory(AddUtils.resolveItem("HONEY_BOTTLE"), 50)));
+                put(EntityType.SILVERFISH, Utils.recipe("STONE"));
+                put(EntityType.ENDERMITE, Utils.recipe("ENDER_PEARL"));
+                put(EntityType.BAT, Utils.recipe("LEATHER"));
+                put(EntityType.FOX, Utils.recipe("FEATHER", AddUtils.probItemStackFactory(AddUtils.resolveItem("EMERALD"), 20)));
+                put(EntityType.VEX, Utils.recipe());
+                put(EntityType.AXOLOTL, Utils.recipe("AXOLOTL_BUCKET"));
+                put(EntityType.SNIFFER, Utils.recipe("SNIFFER_EGG"));
+                put(EntityType.CAMEL, Utils.recipe("LEATHER", AddUtils.probItemStackFactory(AddUtils.resolveItem("SADDLE"), 5)));
+                put(EntityType.WIND_CHARGE, Utils.recipe("WIND_CHARGE"));
             }
         };
         List<World> worldlist = Bukkit.getWorlds();
@@ -1880,17 +1905,41 @@ public class RecipeSupporter {
             int energyComsumption;
             List<MachineRecipe> result = e.getValue();
             if (MachineRecipeUtils.isGeneratorRecipe(result)) {
-                // 排除AbstractTransformer
+                // 排除AbstractTransformer，但允许VirtualKiller、FinalVirtualKiller和地理资源相关机器
                 if (!(item instanceof AbstractMachine && (!(item instanceof AbstractTransformer)))) {
+                    energyComsumption = tryGetMachineEnergy(item);
+                    STACKMGENERATOR_LIST.put(item, energyComsumption);
+                } else if (item instanceof VirtualKiller || item instanceof FinalVirtualKiller) {
+                    // 屠宰工厂和终极屠宰工厂允许放入堆叠生成器
+                    energyComsumption = tryGetMachineEnergy(item);
+                    STACKMGENERATOR_LIST.put(item, energyComsumption);
+                } else if (isGeoResourceMachine(item)) {
+                    // 地理资源相关机器允许放入堆叠生成器
                     energyComsumption = tryGetMachineEnergy(item);
                     STACKMGENERATOR_LIST.put(item, energyComsumption);
                 }
             } else if (MachineRecipeUtils.isMachineRecipe(result)) {
-                // 排除AbstractProcessor
+                // 排除AbstractProcessor，但允许AbstractRecipeMachine、VirtualKiller、FinalVirtualKiller和地理资源相关机器
                 if (!(item instanceof AbstractMachine
                         && (!(item instanceof EMachine)
                         && !(item instanceof MTMachine)
-                        && !(item instanceof AEMachine)))) {
+                        && !(item instanceof AEMachine)
+                        && !(item instanceof AbstractRecipeMachine)
+                        && !(item instanceof VirtualKiller)
+                        && !(item instanceof FinalVirtualKiller)
+                        && !isGeoResourceMachine(item)))) {
+                    energyComsumption = tryGetMachineEnergy(item);
+                    STACKMACHINE_LIST.put(item, energyComsumption);
+                } else if (item instanceof AbstractRecipeMachine) {
+                    // AbstractRecipeMachine的子类允许放入堆叠配方机器
+                    energyComsumption = tryGetMachineEnergy(item);
+                    STACKMACHINE_LIST.put(item, energyComsumption);
+                } else if (item instanceof VirtualKiller || item instanceof FinalVirtualKiller) {
+                    // 屠宰工厂和终极屠宰工厂允许放入堆叠配方机器
+                    energyComsumption = tryGetMachineEnergy(item);
+                    STACKMACHINE_LIST.put(item, energyComsumption);
+                } else if (isGeoResourceMachine(item)) {
+                    // 地理资源相关机器允许放入堆叠配方机器
                     energyComsumption = tryGetMachineEnergy(item);
                     STACKMACHINE_LIST.put(item, energyComsumption);
                 }
@@ -2083,6 +2132,37 @@ public class RecipeSupporter {
                         .formatted(item.getId(), e.getMessage()));
                 return false;
             }
+        } else if (ReflectUtils.isExtendedFrom(item.getClass(), ".GEOQuarry")
+                || (item.getId().contains("GEO_QUARRY") || item.getId().contains("GEOQURRY"))) {
+            // 处理 InfinityExpansion 的 GEOQuarry 类
+            int ticks = 0;
+            try {
+                Integer ticksPerOutput = (Integer) ReflectUtils.invokeGetRecursively(item, Settings.FIELD, "ticksPerOutput");
+                if (ticksPerOutput != null) {
+                    ticks = ticksPerOutput - 1; // 转换为配方 tick
+                }
+            } catch (Throwable e) {
+                ticks = 0;
+            }
+            // GEO_MINER 配方是从 GEO_MINER RecipeType 获取的
+            // 我们需要获取所有 GEO_MINER 类型的配方
+            try {
+                List<MachineRecipe> geoRecipes = PROVIDED_SHAPED_RECIPES.get(RecipeType.GEO_MINER);
+                if (geoRecipes != null && !geoRecipes.isEmpty()) {
+                    for (MachineRecipe recipe : geoRecipes) {
+                        // 创建一个空的输入配方，输出为 GEO_MINER 的输出
+                        recipes.add(MachineRecipeUtils.mgFrom(ticks, new ItemStack[0], recipe.getOutput()));
+                    }
+                } else {
+                    // 如果没有 GEO_MINER 配方，创建一个空的配方
+                    recipes.add(MachineRecipeUtils.mgFrom(ticks, new ItemStack[0], new ItemStack[0]));
+                }
+            } catch (Throwable e) {
+                Debug.logger("Error in loading Slimefun Item %s StackMachineRecipe: %s"
+                        .formatted(item.getId(), e.getMessage()));
+                return false;
+            }
+            return true;
         }
         return false;
     }

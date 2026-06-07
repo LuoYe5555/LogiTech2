@@ -8,6 +8,7 @@ enable:
   - Fluffymachines
   - LiteXpansion
   - LogiTech
+  - SakuraLoveTech
 Slimefun:
   enable: true
   ELECTRIC_GOLD_PAN:
@@ -6360,3 +6361,34 @@ LogiTech:
           output:
             '1': 64LOGITECH_STACKFRAME
       energy: -1
+
+SakuraLoveTech:
+  YINGMO_MOSHI_JI:
+    mode: w
+    type: generator
+    recipe:
+      '0':
+        output:
+          '1': 5COBBLESTONE
+        tick: 6
+    energy: -1
+  YINGMO_SHUAXIAN_JI:
+    mode: w
+    type: generator
+    recipe:
+      '0':
+        output:
+          '1': 5STRING
+        tick: 6
+    energy: -1
+  YINGMO_XILUANGTAI:
+    mode: w
+    type: machine
+    recipe:
+      '0':
+        input:
+          '1': 8COBBLESTONE
+        output:
+          '1': 3SIFTED_ORE
+        tick: 6
+    energy: -1

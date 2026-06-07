@@ -9,8 +9,10 @@ import io.github.thebusybiscuit.slimefun4.utils.ChatUtils;
 import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import me.matl114.logitech.core.Items.SpecialItems.EntityFeat;
 import me.matl114.logitech.core.Machines.Abstracts.AbstractMachine;
 import me.matl114.logitech.core.Registries.RecipeSupporter;
@@ -84,11 +86,23 @@ public class VirtualKiller extends AbstractMachine {
         HashMap<EntityType, ItemStack[]> map = getEntityMap();
         List<MachineRecipe> providedRecipes = new ArrayList<>();
         for (Map.Entry<EntityType, ItemStack[]> entry : map.entrySet()) {
-            if (entry.getValue().length != 0)
-                providedRecipes.add(MachineRecipeUtils.stackFrom(
-                        0, new ItemStack[] {EntityFeat.getItemFromEntityType(entry.getKey())}, entry.getValue()));
+            ItemStack[] outputs = entry.getValue();
+            // 如果掉落物为空，跳过该配方（不在配方列表中展示）
+            if (outputs == null || outputs.length == 0) {
+                continue;
+            }
+            // 使用 noConsumeIndices 参数将输入（生物特征）标记为不消耗
+            Set<Integer> noConsumeIndices = new HashSet<>();
+            noConsumeIndices.add(0); // 第一个输入（生物特征）不消耗
+            providedRecipes.add(MachineRecipeUtils.stackFrom(
+                    0, new ItemStack[] {EntityFeat.getItemFromEntityType(entry.getKey())}, outputs, noConsumeIndices));
         }
         return providedRecipes;
+    }
+
+    @Override
+    public List<MachineRecipe> getMachineRecipes() {
+        return provideDisplayRecipe();
     }
 
     public void constructMenu(BlockMenuPreset preset) {
