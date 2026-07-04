@@ -17,6 +17,7 @@ import me.matl114.logitech.core.Depends.SupportedPluginManager;
 import me.matl114.logitech.core.Registries.AddDepends;
 import me.matl114.logitech.core.Registries.CustomEffects;
 import me.matl114.logitech.core.Registries.MultiBlockTypes;
+import me.matl114.logitech.core.Registries.RecipeSupporter;
 import me.matl114.logitech.listeners.ListenerManager;
 import me.matl114.logitech.listeners.ProtectionManager;
 import me.matl114.logitech.manager.EquipmentFUManager;

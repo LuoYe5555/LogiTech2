@@ -777,15 +777,33 @@ public class RecipeSupporter {
                     recipeloop:
                     for (String recipe : machineRecipe) {
                         String ippath = AddUtils.concat(machinepath, ".recipe.", recipe, ".input");
+                        String tippath = AddUtils.concat(machinepath, ".recipe.", recipe, ".template_input");
                         String oppath = AddUtils.concat(machinepath, ".recipe.", recipe, ".output");
                         Set<String> inputKey = config.getKeys(ippath);
+                        Set<String> templateInputKey = config.getKeys(tippath);
                         Set<String> outputKey = config.getKeys(oppath);
                         //                    List<String> inputlist=config.getStringList(rcpath+".input");
                         //                    List<String> outputlist=config.getStringList(rcpath+".output");
                         int tick = config.getInt(AddUtils.concat(machinepath, ".recipe.", recipe, ".tick"));
-                        ItemStack[] input = new ItemStack[inputKey.size()];
-                        ItemStack[] output = new ItemStack[outputKey.size()];
-                        int len = 0;
+                        
+                        List<ItemStack> inputList = new ArrayList<>();
+                        Set<Integer> noConsumeIndices = new HashSet<>();
+                        
+                        if (templateInputKey.size() > 0) {
+                            for (String skey : templateInputKey) {
+                                ItemStack it = loadItemStack(config, AddUtils.concat(tippath, ".", skey));
+                                if (it == null) {
+                                    if (withWarning)
+                                        Debug.logger(
+                                                "ERROR WHILE LOADING MACHINE CONFIG: failed to load recipe template_input %s"
+                                                                .formatted(recipe));
+                                    it = AddItem.RESOLVE_FAILED.clone();
+                                }
+                                noConsumeIndices.add(inputList.size());
+                                inputList.add(it);
+                            }
+                        }
+                        
                         if (inputKey.size() > 0) {
                             for (String skey : inputKey) {
                                 ItemStack it = loadItemStack(config, AddUtils.concat(ippath, ".", skey));
@@ -796,12 +814,14 @@ public class RecipeSupporter {
                                                         .formatted(recipe));
                                     it = AddItem.RESOLVE_FAILED.clone();
                                 }
-                                input[len] = it;
-                                ++len;
+                                inputList.add(it);
                             }
                         } else {
                             Debug.debug("empty input");
                         }
+                        
+                        ItemStack[] input = inputList.toArray(new ItemStack[0]);
+                        ItemStack[] output = new ItemStack[outputKey.size()];
                         int len2 = 0;
                         if (outputKey.size() > 0) {
                             for (String skey : outputKey) {
@@ -822,7 +842,11 @@ public class RecipeSupporter {
                         if (isGenerator) {
                             recipes.add(MachineRecipeUtils.mgFrom(tick, input, output));
                         } else {
-                            recipes.add(MachineRecipeUtils.stackFrom(tick, input, output));
+                            if (noConsumeIndices.isEmpty()) {
+                                recipes.add(MachineRecipeUtils.stackFrom(tick, input, output));
+                            } else {
+                                recipes.add(MachineRecipeUtils.stackFrom(tick, input, output, noConsumeIndices));
+                            }
                         }
                     }
                 } catch (Throwable e) {
@@ -955,6 +979,17 @@ public class RecipeSupporter {
             } else if (type.startsWith("no")) {
                 STACKMACHINE_LIST.remove(machine);
                 STACKMGENERATOR_LIST.remove(machine);
+            } else if (type.startsWith("temp")) {
+                Integer en = STACKMGENERATOR_LIST.remove(machine);
+                if (replaceEnergy) {
+                    STACKMACHINE_LIST.put(machine, energy);
+                } else {
+                    Integer en2 = STACKMACHINE_LIST.get(machine);
+                    en = en2 != null ? en2 : (en != null ? en : -1);
+                    if (en == -1) {
+                        STACKMACHINE_LIST.put(machine, energy);
+                    }
+                }
             }
         }
     }
@@ -1924,12 +1959,31 @@ public class RecipeSupporter {
                 if (!(item instanceof AbstractMachine && (!(item instanceof AbstractTransformer)))) {
                     energyComsumption = tryGetMachineEnergy(item);
                     STACKMGENERATOR_LIST.put(item, energyComsumption);
+                } else if (item instanceof VirtualKiller || item instanceof FinalVirtualKiller) {
+                    energyComsumption = tryGetMachineEnergy(item);
+                    STACKMGENERATOR_LIST.put(item, energyComsumption);
+                } else if (isGeoResourceMachine(item)) {
+                    energyComsumption = tryGetMachineEnergy(item);
+                    STACKMGENERATOR_LIST.put(item, energyComsumption);
                 }
             } else if (MachineRecipeUtils.isMachineRecipe(result)) {
                 if (!(item instanceof AbstractMachine
                         && (!(item instanceof EMachine)
                         && !(item instanceof MTMachine)
-                        && !(item instanceof AEMachine)))) {
+                        && !(item instanceof AEMachine)
+                        && !(item instanceof AbstractRecipeMachine)
+                        && !(item instanceof VirtualKiller)
+                        && !(item instanceof FinalVirtualKiller)
+                        && !isGeoResourceMachine(item)))) {
+                    energyComsumption = tryGetMachineEnergy(item);
+                    STACKMACHINE_LIST.put(item, energyComsumption);
+                } else if (item instanceof AbstractRecipeMachine) {
+                    energyComsumption = tryGetMachineEnergy(item);
+                    STACKMACHINE_LIST.put(item, energyComsumption);
+                } else if (item instanceof VirtualKiller || item instanceof FinalVirtualKiller) {
+                    energyComsumption = tryGetMachineEnergy(item);
+                    STACKMACHINE_LIST.put(item, energyComsumption);
+                } else if (isGeoResourceMachine(item)) {
                     energyComsumption = tryGetMachineEnergy(item);
                     STACKMACHINE_LIST.put(item, energyComsumption);
                 }
@@ -1946,6 +2000,8 @@ public class RecipeSupporter {
         } catch (Throwable w) {
         }
         loadStackMachineConfig(ConfigLoader.MACHINES, "stack_type", true, true);
+        LogiTechStackSupport.registerLogiTechStackableDirectly();
+        LogiTechStackSupport.registerAllLogiTechStackable();
         Debug.logger("配方支持器初始化完成, 耗时 " + (System.nanoTime() - a) + " 纳秒");
     }
 

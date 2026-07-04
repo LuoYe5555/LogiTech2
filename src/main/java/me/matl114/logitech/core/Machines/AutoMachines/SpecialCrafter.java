@@ -268,10 +268,12 @@ public abstract class SpecialCrafter extends AbstractAdvancedProcessor implement
                 handler.setObject(0, targetId);
                 List<Integer> indexes = new ArrayList<>();
                 List<MachineRecipe> machineRecipes1 = RecipeSupporter.PROVIDED_UNSHAPED_RECIPES.get(type);
-                for (int i = 0; i < machineRecipes1.size(); ++i) {
-                    MachineRecipe machineRecipe = machineRecipes1.get(i);
-                    if (CraftUtils.matchItemStack(target, machineRecipe.getOutput()[0], false)) {
-                        indexes.add(i);
+                if (machineRecipes1 != null) {
+                    for (int i = 0; i < machineRecipes1.size(); ++i) {
+                        MachineRecipe machineRecipe = machineRecipes1.get(i);
+                        if (CraftUtils.matchItemStack(target, machineRecipe.getOutput()[0], false)) {
+                            indexes.add(i);
+                        }
                     }
                 }
                 handler.setObject(1, indexes);

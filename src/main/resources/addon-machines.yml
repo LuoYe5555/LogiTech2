@@ -6396,11 +6396,11 @@ SakuraLoveTech:
 RykenSlimefunCustomizer:
   OT_概念化序列构造矩阵:
     mode: w
-    type: generator
+    type: template
     energy: -1
     recipe:
       '0':
-        input:
+        template_input:
           '1': OT_PLC_1
         output:
           '1': LOGITECH_TECH_CORE
@@ -6408,3 +6408,26 @@ RykenSlimefunCustomizer:
           '3': LOGITECH_METAL_CORE
           '4': LOGITECH_SMELERY_CORE
         tick: 0
+  OT_世界特征制造器:
+    mode: w
+    type: template
+    energy: -1
+    recipe:
+      '0':
+        template_input:
+          '1': OT_PLC_1
+        output:
+          '1': LOGITECH_WORLD_FEAT
+        tick: 8
+      '1':
+        template_input:
+          '1': OT_PLC_2
+        output:
+          '1': LOGITECH_END_FEAT
+        tick: 8
+      '2':
+        template_input:
+          '1': OT_PLC_3
+        output:
+          '1': LOGITECH_NEATHER_FEAT
+        tick: 8
