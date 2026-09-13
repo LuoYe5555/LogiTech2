@@ -49,8 +49,11 @@ import java.util.stream.Collectors;
 
 public class RecipeSupporter {
     public static void init() {
+        Debug.debug("[RecipeSupporter] init() called");
         if (!hasInit) {
+            Debug.debug("[RecipeSupporter] Initializing recipe supportor...");
             initRecipeSupportor();
+            Debug.debug("[RecipeSupporter] Recipe supportor initialized");
         }
     }
 
@@ -202,6 +205,7 @@ public class RecipeSupporter {
             if (AddDepends.VOIDHARVEST != null) {
                 add(AddDepends.VOIDHARVEST);
             }
+            add(RecipeType.GEO_MINER);
         }
     };
 
@@ -625,9 +629,10 @@ public class RecipeSupporter {
     public static final HashMap<SlimefunItem, Integer> STACKMGENERATOR_LIST = new LinkedHashMap<>();
 
     public static List<MachineRecipe> getStackedRecipes(RecipeType type) {
-        if (SUPPORTED_UNSHAPED_RECIPETYPE.contains(type)) {
-            if (PROVIDED_UNSHAPED_RECIPES.get(type) == null
-                    || PROVIDED_UNSHAPED_RECIPES.get(type).size() == 0) {
+        // 原版工作台配方的列表在启动时已加载,同样需要支持
+        if (type == BukkitUtils.VANILLA_CRAFTTABLE || SUPPORTED_UNSHAPED_RECIPETYPE.contains(type)) {
+            List<MachineRecipe> recipes = PROVIDED_UNSHAPED_RECIPES.get(type);
+            if (recipes == null || recipes.isEmpty()) {
                 initUnshapedRecipes(type);
             }
             return PROVIDED_UNSHAPED_RECIPES.get(type);
@@ -734,8 +739,13 @@ public class RecipeSupporter {
                             try {
                                 List<MachineRecipe> rplist = PROVIDED_UNSHAPED_RECIPES.get(type);
                                 for (MachineRecipe mr : rplist) {
-                                    recipes.add(
-                                            MachineRecipeUtils.stackFrom(commonTick, mr.getInput(), mr.getOutput()));
+                                    if (isGenerator) {
+                                        recipes.add(
+                                                MachineRecipeUtils.mgFrom(commonTick, mr.getInput(), mr.getOutput()));
+                                    } else {
+                                        recipes.add(
+                                                MachineRecipeUtils.stackFrom(commonTick, mr.getInput(), mr.getOutput()));
+                                    }
                                 }
                             } catch (Throwable e) {
                                 if (withWarning) {
@@ -752,8 +762,13 @@ public class RecipeSupporter {
                                         ? MULTIBLOCK_RECIPES.get(mb)
                                         : MACHINE_RECIPELIST.get(item);
                                 for (MachineRecipe mr : rplist) {
-                                    recipes.add(
-                                            MachineRecipeUtils.stackFrom(commonTick, mr.getInput(), mr.getOutput()));
+                                    if (isGenerator) {
+                                        recipes.add(
+                                                MachineRecipeUtils.mgFrom(commonTick, mr.getInput(), mr.getOutput()));
+                                    } else {
+                                        recipes.add(
+                                                MachineRecipeUtils.stackFrom(commonTick, mr.getInput(), mr.getOutput()));
+                                    }
                                 }
                             } catch (Throwable e) {
                                 if (withWarning) {
@@ -821,23 +836,28 @@ public class RecipeSupporter {
                         }
                         
                         ItemStack[] input = inputList.toArray(new ItemStack[0]);
-                        ItemStack[] output = new ItemStack[outputKey.size()];
-                        int len2 = 0;
-                        if (outputKey.size() > 0) {
-                            for (String skey : outputKey) {
-                                ItemStack it = loadItemStack(config, AddUtils.concat(oppath, ".", skey));
-                                if (it == null) {
-                                    if (withWarning)
-                                        Debug.logger(
-                                                "ERROR WHILE LOADING MACHINE CONFIG: failed to load recipe output %s"
-                                                        .formatted(recipe));
-                                    it = AddItem.RESOLVE_FAILED.clone();
-                                }
-                                output[len2] = it;
-                                ++len2;
-                            }
+                        ItemStack[] output;
+                        if (config.contains(AddUtils.concat(oppath, ".type"))) {
+                            output = new ItemStack[]{loadItemStack(config, oppath)};
                         } else {
-                            Debug.debug("empty output");
+                            output = new ItemStack[outputKey.size()];
+                            int len2 = 0;
+                            if (outputKey.size() > 0) {
+                                for (String skey : outputKey) {
+                                    ItemStack it = loadItemStack(config, AddUtils.concat(oppath, ".", skey));
+                                    if (it == null) {
+                                        if (withWarning)
+                                            Debug.logger(
+                                                    "ERROR WHILE LOADING MACHINE CONFIG: failed to load recipe output %s"
+                                                                    .formatted(recipe));
+                                        it = AddItem.RESOLVE_FAILED.clone();
+                                    }
+                                    output[len2] = it;
+                                    ++len2;
+                                }
+                            } else {
+                                Debug.debug("empty output");
+                            }
                         }
                         if (isGenerator) {
                             recipes.add(MachineRecipeUtils.mgFrom(tick, input, output));
@@ -1205,9 +1225,11 @@ public class RecipeSupporter {
         RECIPE_TYPES.add(BukkitUtils.VANILLA_STONECUTTER);
         PROVIDED_UNSHAPED_RECIPES.put(BukkitUtils.VANILLA_STONECUTTER, new ArrayList<>());
         PROVIDED_SHAPED_RECIPES.put(BukkitUtils.VANILLA_STONECUTTER, new ArrayList<>());
+        Debug.logger("基础配方类型注册完成");
 
 
         // 加载原版配方
+        Debug.logger("开始加载原版配方...");
         Iterator<Recipe> recipeIterator = PLUGIN.getJavaPlugin().getServer().recipeIterator();
         while (recipeIterator.hasNext()) {
             Recipe next = recipeIterator.next();
@@ -1916,6 +1938,7 @@ public class RecipeSupporter {
                         MGeneratorRecipe validGenerator = MachineRecipeUtils.tryGenerateMGFromMachine(machineRecipe);
                         if (validGenerator != null) {
                             res = validGenerator;
+                            Debug.debug("生成器识别成功: %s, 配方类型: MGeneratorRecipe".formatted(item.getId()));
                         } else {
                             res = MachineRecipeUtils.stackFromMachine(machineRecipe);
                         }
@@ -2000,8 +2023,6 @@ public class RecipeSupporter {
         } catch (Throwable w) {
         }
         loadStackMachineConfig(ConfigLoader.MACHINES, "stack_type", true, true);
-        LogiTechStackSupport.registerLogiTechStackableDirectly();
-        LogiTechStackSupport.registerAllLogiTechStackable();
         Debug.logger("配方支持器初始化完成, 耗时 " + (System.nanoTime() - a) + " 纳秒");
     }
 

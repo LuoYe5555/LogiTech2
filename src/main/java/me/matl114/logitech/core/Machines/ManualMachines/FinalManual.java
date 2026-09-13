@@ -27,6 +27,7 @@ import me.matl114.logitech.utils.*;
 import me.matl114.logitech.utils.UtilClass.ItemClass.ItemPusherProvider;
 import me.matl114.logitech.utils.UtilClass.MenuClass.MenuFactory;
 import me.matl114.logitech.utils.UtilClass.RecipeClass.ImportRecipes;
+import me.matl114.logitech.utils.Debug;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineRecipe;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
@@ -112,10 +113,7 @@ public class FinalManual extends AbstractManual implements MultiCraftType, Impor
                 add(BukkitUtils.VANILLA_FURNACE);
             }
         };
-        PostSetupTasks.addPostRegisterTask(() -> {
-            registerRecipeList();
-            initMenuFactory();
-        });
+        // 延迟初始化配方列表和菜单工厂
         // 启动奇点合成的支持
         this.CRAFT_PROVIDER = SINGULARITY_PROVIDER;
         setDisplayRecipes(Utils.list(
@@ -132,6 +130,10 @@ public class FinalManual extends AbstractManual implements MultiCraftType, Impor
                 null,
                 AddUtils.getInfoShow(
                         "&f机制 - &c无限级一键合成", "&7本机器最多支持一键合成9,999,999次", "&7\"终极合成\"的特性让它不再是空谈", "&7是时候让存储里的大批物品动起来了")));
+        // 异步加载配方，确保 RecipeSupporter 已初始化
+        PostSetupTasks.addPostRegisterTask(() -> {
+            getMachineRecipes(null, null); // 触发一次 getMachineRecipes 调用
+        });
     }
 
     public static final ItemPusherProvider SINGULARITY_PROVIDER = FinalFeature.STORAGE_AND_LOCPROXY_READER;
@@ -141,23 +143,49 @@ public class FinalManual extends AbstractManual implements MultiCraftType, Impor
     }
 
     public final List<RecipeType> BW_LIST;
-    public RecipeType[] craftType = new RecipeType[] {RecipeType.ENHANCED_CRAFTING_TABLE};
+    public RecipeType[] craftType = null;  // 改为 null，延迟初始化
     protected boolean isWhiteList = true;
 
-    public List<MachineRecipe> getMachineRecipes(Block b, BlockMenu inv) {
-        Location loc = inv.getLocation();
-        int index = MultiCraftType.getRecipeTypeIndex(loc);
-        if (index >= 0 && index < getCraftTypes().length) {
-            return RecipeSupporter.PROVIDED_UNSHAPED_RECIPES.get(getCraftTypes()[index]);
-        } else if (index > 0) {
-            MultiCraftType.forceSetRecipeTypeIndex(loc, 0);
-            setNowRecordRecipe(loc, -1);
+    public RecipeType[] getCraftTypes() {
+        if (craftType == null) {
+            registerRecipeList();
         }
-        return null;
+        return craftType;
     }
 
-    public RecipeType[] getCraftTypes() {
-        return craftType;
+    public List<MachineRecipe> getMachineRecipes(Block b, BlockMenu inv) {
+        try {
+            // 确保 RecipeSupporter 已初始化
+            RecipeSupporter.init();
+            Location loc = inv != null ? inv.getLocation() : null;
+            int index = MultiCraftType.getRecipeTypeIndex(loc);
+
+            if (getCraftTypes() == null || getCraftTypes().length == 0) {
+                return null;
+            }
+
+            if (index >= 0 && index < getCraftTypes().length) {
+                RecipeType recipeType = getCraftTypes()[index];
+
+                if (recipeType == null) {
+                    return null;
+                }
+
+                List<MachineRecipe> recipes = RecipeSupporter.PROVIDED_UNSHAPED_RECIPES.get(recipeType);
+                if (recipes == null) {
+                    return null;
+                }
+
+                return recipes;
+            } else if (index > 0) {
+                MultiCraftType.forceSetRecipeTypeIndex(loc, 0);
+                setNowRecordRecipe(loc, -1);
+            }
+            return null;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public MachineRecipe getRecordRecipe(SlimefunBlockData data) {
@@ -197,10 +225,12 @@ public class FinalManual extends AbstractManual implements MultiCraftType, Impor
     protected void initMenuFactory() {
         if (RECIPEMENU == null) {
             RECIPEMENU = new HashMap<>();
-            int len = craftType.length;
+            // 确保 craftType 已初始化
+            RecipeType[] types = getCraftTypes();
+            int len = types.length;
             RecipeType rp;
             for (int i = 0; i < len; i++) {
-                rp = craftType[i];
+                rp = types[i];
                 RECIPEMENU.put(
                         rp,
                         MenuUtils.createMRecipeListDisplay(

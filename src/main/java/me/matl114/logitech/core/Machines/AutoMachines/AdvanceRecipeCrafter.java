@@ -24,8 +24,11 @@ import me.matl114.logitech.manager.Schedules;
 import me.matl114.logitech.utils.*;
 import me.matl114.logitech.utils.UtilClass.ItemClass.ItemCounter;
 import me.matl114.logitech.utils.UtilClass.ItemClass.ItemGreedyConsumer;
+import me.matl114.logitech.utils.UtilClass.MenuClass.DataMenuClickHandler;
 import me.matl114.logitech.utils.UtilClass.RecipeClass.ImportRecipes;
 import me.matl114.logitech.utils.UtilClass.RecipeClass.MultiCraftingOperation;
+import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ChestMenu;
+import me.mrCookieSlime.CSCoreLibPlugin.general.Inventory.ClickAction;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineRecipe;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenuPreset;
@@ -34,6 +37,7 @@ import me.mrCookieSlime.Slimefun.api.item_transport.ItemTransportFlow;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -200,6 +204,14 @@ public class AdvanceRecipeCrafter extends AbstractAdvancedProcessor implements R
             updateMenu(menu, block, Settings.RUN);
             return false;
         });
+        menu.addMenuClickHandler(21, (player, i, itemStack, clickAction) -> {
+            switchRecipe(menu, block, false);
+            return false;
+        });
+        menu.addMenuClickHandler(23, (player, i, itemStack, clickAction) -> {
+            switchRecipe(menu, block, true);
+            return false;
+        });
         menu.addMenuOpeningHandler((player -> {
             parseRecipe(menu);
             updateMenu(menu, block, Settings.RUN);
@@ -217,21 +229,103 @@ public class AdvanceRecipeCrafter extends AbstractAdvancedProcessor implements R
         menu.dropItems(loc, RECIPEITEM_SLOT);
     }
 
+    public final int DATA_SLOT = 3;
+
+    public DataMenuClickHandler createDataHolder() {
+        return new DataMenuClickHandler() {
+            int[] intdata = new int[3];
+
+            public int getInt(int i) {
+                return intdata[i];
+            }
+
+            public void setInt(int i, int val) {
+                intdata[i] = val;
+            }
+
+            @Override
+            public boolean onClick(Player player, int i, ItemStack itemStack, ClickAction clickAction) {
+                return false;
+            }
+        };
+    }
+
+    public DataMenuClickHandler getDataHolder(Block b, BlockMenu inv) {
+        ChestMenu.MenuClickHandler handler = inv.getMenuClickHandler(DATA_SLOT);
+        if (handler instanceof DataMenuClickHandler dh) {
+            return dh;
+        } else {
+            DataMenuClickHandler dh = createDataHolder();
+            inv.addMenuClickHandler(DATA_SLOT, dh);
+            return dh;
+        }
+    }
+
+    public void switchRecipe(BlockMenu menu, Block block, boolean next) {
+        DataMenuClickHandler handler = getDataHolder(block, menu);
+        int currentIndex = handler.getInt(1);
+        @SuppressWarnings("unchecked")
+        List<Integer> indexes = (List<Integer>) handler.getObject(0);
+        if (currentIndex >= 0 && indexes != null && !indexes.isEmpty()) {
+            int currentPos = indexes.indexOf(currentIndex);
+            if (currentPos >= 0) {
+                int nextPos;
+                if (next) {
+                    nextPos = (currentPos + 1) % indexes.size();
+                } else {
+                    nextPos = (currentPos - 1 + indexes.size()) % indexes.size();
+                }
+                int newRecipeIndex = indexes.get(nextPos);
+                handler.setInt(1, newRecipeIndex);
+                // Also update DataCache for getRecordRecipe to work
+                setNowRecordRecipe(menu.getLocation(), newRecipeIndex);
+                updateMenu(menu, block, Settings.RUN);
+            }
+        }
+    }
+
     public void parseRecipe(BlockMenu menu) {
+        DataMenuClickHandler handler = getDataHolder(null, menu);
         ItemStack target = menu.getItemInSlot(RECIPEITEM_SLOT);
         if (target == null || target.getType() == Material.AIR) {
+            handler.setInt(1, -1);
+            handler.setObject(0, null);
+            handler.setObject(1, null);
+            // Also update DataCache
             setNowRecordRecipe(menu.getLocation(), -1);
         } else {
-            List<MachineRecipe> machineRecipes1 = getMachineRecipes();
-            for (int i = 0; i < machineRecipes1.size(); ++i) {
-                MachineRecipe machineRecipe = machineRecipes1.get(i);
-                if (CraftUtils.matchItemStack(target, machineRecipe.getOutput()[0], false)) {
-                    setNowRecordRecipe(menu.getLocation(), i);
-                    return;
+            String targetId = AddUtils.getItemId(target);
+            String lastTargetId = (String) handler.getObject(1);
+            boolean needRecalculate = !targetId.equals(lastTargetId);
+
+            if (needRecalculate) {
+                handler.setObject(1, targetId);
+                List<Integer> indexes = new ArrayList<>();
+                List<MachineRecipe> machineRecipes1 = getMachineRecipes();
+                for (int i = 0; i < machineRecipes1.size(); ++i) {
+                    MachineRecipe machineRecipe = machineRecipes1.get(i);
+                    if (CraftUtils.matchItemStack(target, machineRecipe.getOutput()[0], false)) {
+                        indexes.add(i);
+                    }
                 }
+                handler.setObject(0, indexes);
             }
-            setNowRecordRecipe(menu.getLocation(), -1);
-            return;
+
+            @SuppressWarnings("unchecked")
+            List<Integer> indexes = (List<Integer>) handler.getObject(0);
+            if (indexes != null && !indexes.isEmpty()) {
+                int currentIndex = handler.getInt(1);
+                if (!indexes.contains(currentIndex)) {
+                    int newIndex = indexes.get(0);
+                    handler.setInt(1, newIndex);
+                    // Also update DataCache
+                    setNowRecordRecipe(menu.getLocation(), newIndex);
+                }
+            } else {
+                handler.setInt(1, -1);
+                // Also update DataCache
+                setNowRecordRecipe(menu.getLocation(), -1);
+            }
         }
     }
 
@@ -247,8 +341,57 @@ public class AdvanceRecipeCrafter extends AbstractAdvancedProcessor implements R
                     0);
             return;
         }
-        MachineRecipe recipe = getRecordRecipe(data);
 
+        // Update recipe display
+        DataMenuClickHandler handler = getDataHolder(block, menu);
+        @SuppressWarnings("unchecked")
+        List<Integer> indexes = (List<Integer>) handler.getObject(0);
+        int currentIndex = handler.getInt(1);
+
+        // Update recipe switch buttons
+        if (indexes != null && !indexes.isEmpty() && currentIndex >= 0) {
+            MachineRecipe recipe = getRecordRecipe(data);
+            if (recipe == null) {
+                menu.replaceExistingItem(21, new CustomItemStack(
+                        Material.RED_STAINED_GLASS_PANE,
+                        "&c上一个配方",
+                        "&7可用配方数量: &f" + indexes.size()));
+                menu.replaceExistingItem(23, new CustomItemStack(
+                        Material.GREEN_STAINED_GLASS_PANE,
+                        "&a下一个配方",
+                        "&7可用配方数量: &f" + indexes.size()));
+            } else {
+                ItemStack currentOutput = recipe.getOutput()[0];
+                String outputName = currentOutput.hasItemMeta() && currentOutput.getItemMeta().hasDisplayName()
+                        ? currentOutput.getItemMeta().getDisplayName()
+                        : currentOutput.getType().name();
+
+                menu.replaceExistingItem(21, new CustomItemStack(
+                        Material.RED_STAINED_GLASS_PANE,
+                        "&c上一个配方",
+                        "&7可用配方数量: &f" + indexes.size(),
+                        "&7当前配方: &f" + (indexes.indexOf(currentIndex) + 1) + "/" + indexes.size(),
+                        "&e点击切换到上一个配方"));
+                menu.replaceExistingItem(23, new CustomItemStack(
+                        Material.GREEN_STAINED_GLASS_PANE,
+                        "&a下一个配方",
+                        "&7可用配方数量: &f" + indexes.size(),
+                        "&7当前配方: &f" + (indexes.indexOf(currentIndex) + 1) + "/" + indexes.size(),
+                        "&e点击切换到下一个配方"));
+            }
+        } else {
+            menu.replaceExistingItem(21, new CustomItemStack(
+                    Material.GRAY_STAINED_GLASS_PANE,
+                    "&7无可用配方",
+                    "&e请先放入一个有效的物品"));
+            menu.replaceExistingItem(23, new CustomItemStack(
+                    Material.GRAY_STAINED_GLASS_PANE,
+                    "&7无可用配方",
+                    "&e请先放入一个有效的物品"));
+        }
+
+        // Update recipe display slots
+        MachineRecipe recipe = getRecordRecipe(data);
         if (recipe == null) {
             for (int var4 = 0; var4 < RECIPE_DISPLAY.length; ++var4) {
                 menu.replaceExistingItem(RECIPE_DISPLAY[var4], DISPLAY_DEFAULT_BKGROUND);

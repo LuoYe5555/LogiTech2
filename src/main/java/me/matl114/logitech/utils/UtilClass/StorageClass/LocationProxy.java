@@ -16,4 +16,25 @@ public interface LocationProxy {
     public Location getLocation(ItemMeta meta);
 
     public void updateLocation(Location loc);
+
+    public default ItemStack getItemStack(Location loc, ItemStack hint) {
+        return getItemStack(loc);
+    }
+
+    public default long getItemAmount(Location loc, ItemStack item) {
+        return getAmount(loc);
+    }
+
+    public default void setItemAmount(Location loc, ItemStack item, long amount) {
+        setAmount(loc, amount);
+    }
+
+    public default long getItemMaxAmount(Location loc, ItemStack item) {
+        return getMaxAmount(loc);
+    }
+
+    public default boolean canAcceptItem(Location loc, ItemStack item) {
+        ItemStack stored = getItemStack(loc);
+        return stored == null || stored.isSimilar(item);
+    }
 }

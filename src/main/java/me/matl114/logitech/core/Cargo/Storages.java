@@ -6,6 +6,7 @@ import me.matl114.logitech.core.AddSlimefunItems;
 import me.matl114.logitech.core.Cargo.Singularity.SingularityProxy;
 import me.matl114.logitech.core.Cargo.Singularity.SingularityStorage;
 import me.matl114.logitech.core.CustomSlimefunItem;
+import me.matl114.logitech.core.Depends.NetworksDrawerProxyAdapter;
 import me.matl114.logitech.core.Depends.NetworksQuantumProxyAdapter;
 import me.matl114.logitech.core.Depends.NetworksQuantumStorageAdapter;
 import me.matl114.logitech.core.Registries.AddDepends;
@@ -64,6 +65,18 @@ public class Storages {
                         Debug.logger(
                                 "WARNING: AN INTERNAL ERROR OCCUR WHEN ADAPTING NETWORK STORAGE,DISABLING RELAVENT FUNCTION");
                         disableNetworkStorage();
+                    }
+                }
+                return null;
+            }))
+            .get();
+    public static final StorageType NTWDRAWER_PROXY = ((Supplier<StorageType>) (() -> {
+                if (MyAddon.getInstance().getServer().getPluginManager().isPluginEnabled("Networks")) {
+                    try {
+                        return new NetworksDrawerProxyAdapter();
+                    } catch (Throwable e) {
+                        Debug.logger(
+                                "WARNING: AN INTERNAL ERROR OCCUR WHEN ADAPTING NETWORK DRAWER,DISABLING RELAVENT FUNCTION");
                     }
                 }
                 return null;

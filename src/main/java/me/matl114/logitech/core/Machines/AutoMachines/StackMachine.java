@@ -150,6 +150,14 @@ public class StackMachine extends AbstractAdvancedProcessor implements MultiCraf
                     BW_LIST_ENERGYCOMSUME[i] = e.getValue();
                     ++i;
                 }
+                Debug.logger("StackMachine初始化完成, 找到 " + currentSize + " 个堆叠机器:");
+                if (currentSize > 0) {
+                    for (int j = 0; j < BW_LIST.size(); j++) {
+                        Debug.logger("  " + (j + 1) + ". " + BW_LIST.get(j).getId());
+                    }
+                } else {
+                    Debug.logger("警告: STACKMACHINE_LIST 为空! 请检查 LogiTechStackSupport 是否正确初始化");
+                }
             }
             hasInit = true;
         }

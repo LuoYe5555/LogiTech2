@@ -10,6 +10,8 @@ import me.matl114.logitech.utils.Algorithms.DynamicArray;
 import me.matl114.logitech.utils.UtilClass.ItemClass.*;
 import me.matl114.logitech.utils.UtilClass.RecipeClass.StackMachineRecipe;
 import me.matl114.logitech.utils.UtilClass.StorageClass.ItemStorageCache;
+import me.matl114.logitech.utils.UtilClass.StorageClass.LocationProxy;
+import me.matl114.logitech.utils.UtilClass.StorageClass.LocationStorageProxy;
 import me.matl114.matlib.utils.version.VersionedMeta;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineRecipe;
 import me.mrCookieSlime.Slimefun.api.inventory.BlockMenu;
@@ -265,7 +267,9 @@ public class CraftUtils {
                 } else if (itemCounter2.isDirty()) {
                     continue;
                 }
-                if (CraftUtils.matchItemCounter(results, itemCounter2, false)) {
+                if (CraftUtils.matchItemCounter(results, itemCounter2, false)
+                        || (CraftUtils.tryRebindLocationProxy(itemCounter2, results.getItem(), true)
+                                && CraftUtils.matchItemCounter(results, itemCounter2, false))) {
                     results.consume(itemCounter2);
                     if (results.getAmount() <= 0) {
                         allMatched = true;
@@ -322,7 +326,9 @@ public class CraftUtils {
                 }
                 long available = itemCounter2.getAmountLong() - reservedAmount[j];
                 if (available <= 0) continue;
-                if (CraftUtils.matchItemCounter(itemCounter, itemCounter2, false)) {
+                if (CraftUtils.matchItemCounter(itemCounter, itemCounter2, false)
+                        || (CraftUtils.tryRebindLocationProxy(itemCounter2, itemCounter.getItem(), true)
+                                && CraftUtils.matchItemCounter(itemCounter, itemCounter2, false))) {
                     long take = Math.min(available, stillNeed);
                     itemCounter.addMatchAmount(take);
                     itemCounter.addRelate(itemCounter2);
@@ -473,7 +479,9 @@ public class CraftUtils {
                     // 如果该counter已经被人绑定了 就跳过
                     continue;
                 }
-                if (CraftUtils.matchItemCounter(itemCounter2, recipeCounter[i], false)) {
+                if (CraftUtils.matchItemCounter(itemCounter2, recipeCounter[i], false)
+                        || (CraftUtils.tryRebindLocationProxy(itemCounter2, recipeCounter[i].getItem(), true)
+                                && CraftUtils.matchItemCounter(itemCounter2, recipeCounter[i], false))) {
                     // 如果匹配 将其加入...list,并算入matchCnt
                     recipeCounter[i].addRelate(itemCounter2);
                     recipeCounter[i].addMatchAmount(itemCounter2.getAmountLong());
@@ -593,6 +601,10 @@ public class CraftUtils {
                 } else if (CraftUtils.matchItemCounter(recipeCounter2[effectiveIdx], itemCounter, false)) {
                     recipeCounter2[effectiveIdx].addRelate(itemCounter);
                     recipeCounter2[effectiveIdx].addMatchAmount(itemCounter.getMaxStackCnt() - itemCounter.getAmountLong());
+                } else if (CraftUtils.tryRebindLocationProxy(itemCounter, recipeCounter2[effectiveIdx].getItem(), false)) {
+                    recipeCounter2[effectiveIdx].addRelate(itemCounter);
+                    recipeCounter2[effectiveIdx].addMatchAmount(
+                            Math.max(0, calLocationProxyRoom((LocationStorageProxy) itemCounter)));
                 }
                 if (recipeCounter2[effectiveIdx].getStackNum() >= maxAmount2) {
                     break;
@@ -646,6 +658,13 @@ public class CraftUtils {
                         itemCounter2.addRelate(itemCounter);
                         // must use itemCounter.getMaxStackCnt because ItemStorage
                         itemCounter2.addMatchAmount(itemCounter.getMaxStackCnt() - itemCounter.getAmountLong());
+                        hasNextPushSlot = true;
+                        break;
+                    } else if (!itemCounter.isDirty()
+                            && CraftUtils.tryRebindLocationProxy(itemCounter, itemCounter2.getItem(), false)) {
+                        itemCounter2.addRelate(itemCounter);
+                        itemCounter2.addMatchAmount(
+                                Math.max(0, calLocationProxyRoom((LocationStorageProxy) itemCounter)));
                         hasNextPushSlot = true;
                         break;
                     }
@@ -873,12 +892,26 @@ public class CraftUtils {
                             itemCounter.updateMenu(inv);
                             itemCounter.setDirty(true);
                             hasChanged = true;
+                        } else if (itemCounter instanceof LocationStorageProxy
+                                && tryRebindLocationProxy(itemCounter, outputItem.getItem(), false)) {
+                            itemCounter.grab(outputItem);
+                            itemCounter.updateMenu(inv);
+                            itemCounter.setDirty(true);
+                            hasChanged = true;
                         }
                     } else if (itemCounter instanceof ItemStorageCache
                             && itemCounter.getAmountLong() < itemCounter.getMaxStackCnt()
                             && matchItemCounter(outputItem, itemCounter, false)) {
                         itemCounter.grab(outputItem);
                         itemCounter.updateMenu(inv);
+                        hasChanged = true;
+                    } else if (itemCounter instanceof ItemStorageCache isc
+                            && isc.getStorageType() instanceof LocationProxy lp
+                            && isc.getAmountLong() < isc.getMaxStackCnt()
+                            && lp.canAcceptItem(isc instanceof LocationStorageProxy lsp ? lsp.getProxyLocation() : lp.getLocation(isc.getSourceMeta()), outputItem.getItem())) {
+                        isc.setFrom(outputItem);
+                        isc.grab(outputItem);
+                        isc.updateMenu(inv);
                         hasChanged = true;
                     }
                 }
@@ -1906,6 +1939,23 @@ public class CraftUtils {
 
     public static boolean matchItemCounter(ItemCounter counter1, ItemCounter counter2, boolean strictCheck) {
         return matchItemCore(counter1, counter2, strictCheck);
+    }
+
+    public static boolean tryRebindLocationProxy(ItemCounter counter, ItemStack sample, boolean forInput) {
+        if (counter instanceof LocationStorageProxy proxy) {
+            return proxy.rebindToType(sample, forInput);
+        }
+        return false;
+    }
+
+    public static long calLocationProxyRoom(LocationStorageProxy proxy) {
+        ItemStack item = proxy.getItem();
+        if (item == null || !(proxy.getStorageType() instanceof LocationProxy lp)) {
+            return 0;
+        }
+        long max = lp.getItemMaxAmount(proxy.getProxyLocation(), item);
+        long room = Math.min(proxy.getMaxStackCnt(), max) - proxy.getAmountLong();
+        return Math.max(0, room);
     }
     //
     public static boolean matchItemCore(ItemCounter counter1, ItemCounter counter2, boolean strictCheck) {

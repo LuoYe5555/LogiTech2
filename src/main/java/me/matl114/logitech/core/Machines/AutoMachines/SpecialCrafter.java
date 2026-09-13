@@ -261,13 +261,18 @@ public abstract class SpecialCrafter extends AbstractAdvancedProcessor implement
             return false;
         } else {
             String targetId = AddUtils.getItemId(target);
+            int typeIndex = handler.getInt(0);
             String lastTargetId = (String) handler.getObject(0);
-            boolean needRecalculate = !targetId.equals(lastTargetId);
-            
+            Integer lastTypeIndex = (Integer) handler.getObject(2);
+            // 目标物品或机器类型(配方类型)变化时都需要重新搜索配方
+            boolean needRecalculate =
+                    !targetId.equals(lastTargetId) || lastTypeIndex == null || lastTypeIndex != typeIndex;
+
             if (needRecalculate) {
                 handler.setObject(0, targetId);
+                handler.setObject(2, typeIndex);
                 List<Integer> indexes = new ArrayList<>();
-                List<MachineRecipe> machineRecipes1 = RecipeSupporter.PROVIDED_UNSHAPED_RECIPES.get(type);
+                List<MachineRecipe> machineRecipes1 = RecipeSupporter.getStackedRecipes(type);
                 if (machineRecipes1 != null) {
                     for (int i = 0; i < machineRecipes1.size(); ++i) {
                         MachineRecipe machineRecipe = machineRecipes1.get(i);
@@ -295,6 +300,7 @@ public abstract class SpecialCrafter extends AbstractAdvancedProcessor implement
     public DataMenuClickHandler createDataHolder() {
         return new DataMenuClickHandler() {
             int[] intdata = new int[3];
+            Object[] objectdata = new Object[3];
 
             public int getInt(int i) {
                 return intdata[i];
@@ -302,6 +308,14 @@ public abstract class SpecialCrafter extends AbstractAdvancedProcessor implement
 
             public void setInt(int i, int val) {
                 intdata[i] = val;
+            }
+
+            public Object getObject(int i) {
+                return objectdata[i];
+            }
+
+            public void setObject(int i, Object val) {
+                objectdata[i] = val;
             }
 
             @Override
@@ -446,9 +460,9 @@ public abstract class SpecialCrafter extends AbstractAdvancedProcessor implement
         int craftTypeIndex = handler.getInt(0);
         if (craftTypeIndex >= 0) {
             RecipeType type = getCraftTypes()[craftTypeIndex];
-            List<MachineRecipe> recipes = RecipeSupporter.PROVIDED_UNSHAPED_RECIPES.get(type);
+            List<MachineRecipe> recipes = RecipeSupporter.getStackedRecipes(type);
             int recipeIndex = handler.getInt(1);
-            if (recipeIndex >= 0 && recipeIndex < recipes.size()) {
+            if (recipes != null && recipeIndex >= 0 && recipeIndex < recipes.size()) {
                 return recipes.get(recipeIndex);
             }
         }

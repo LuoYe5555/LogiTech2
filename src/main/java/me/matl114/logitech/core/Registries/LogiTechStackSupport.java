@@ -1,19 +1,16 @@
 package me.matl114.logitech.core.Registries;
 
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
-import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
-import me.matl114.logitech.MyAddon;
 import me.matl114.logitech.core.Machines.Abstracts.AbstractMachine;
-import me.matl114.logitech.core.Machines.AutoMachines.StackMachine;
+import me.matl114.logitech.utils.Debug;
 import me.matl114.logitech.utils.MachineRecipeUtils;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.MachineRecipe;
 import org.bukkit.Bukkit;
-import java.lang.reflect.Field;
+
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 public class LogiTechStackSupport {
@@ -70,7 +67,11 @@ public class LogiTechStackSupport {
     }
 
     public static void registerAllLogiTechStackable() {
-        Bukkit.getScheduler().runTaskLater(MyAddon.getInstance(), () -> {
+        Bukkit.getScheduler().runTaskLater(me.matl114.logitech.MyAddon.getInstance(), () -> {
+            Debug.logger("开始注册 LogiTech 堆叠机器...");
+            int generatorCount = 0;
+            int machineCount = 0;
+
             for (String id : LOGITECH_GENERATORS) {
                 SlimefunItem item = SlimefunItem.getById(id);
                 if (item != null) {
@@ -78,8 +79,11 @@ public class LogiTechStackSupport {
                     RecipeSupporter.STACKMGENERATOR_LIST.remove(item);
                     RecipeSupporter.STACKMACHINE_LIST.remove(item);
                     RecipeSupporter.STACKMGENERATOR_LIST.put(item, energy);
+                    generatorCount++;
+                    Debug.logger("已注册堆叠生成器: " + id);
                 }
             }
+
             for (String id : LOGITECH_MACHINES) {
                 SlimefunItem item = SlimefunItem.getById(id);
                 if (item != null && !LOGITECH_GENERATORS.contains(id)) {
@@ -87,10 +91,14 @@ public class LogiTechStackSupport {
                     RecipeSupporter.STACKMGENERATOR_LIST.remove(item);
                     RecipeSupporter.STACKMACHINE_LIST.remove(item);
                     RecipeSupporter.STACKMACHINE_LIST.put(item, energy);
+                    machineCount++;
+                    Debug.logger("已注册堆叠机器: " + id);
                 }
             }
+
+            Debug.logger("LogiTech 堆叠机器注册完成: " + generatorCount + " 个生成器, " + machineCount + " 个机器");
             
-            for (SlimefunItem item : Slimefun.getRegistry().getEnabledSlimefunItems()) {
+            for (SlimefunItem item : io.github.thebusybiscuit.slimefun4.implementation.Slimefun.getRegistry().getEnabledSlimefunItems()) {
                 if (item instanceof AbstractMachine) {
                     try {
                         Method getMachineRecipesMethod = item.getClass().getMethod("getMachineRecipes");
@@ -99,7 +107,7 @@ public class LogiTechStackSupport {
                             List<MachineRecipe> recipes = (List<MachineRecipe>) result;
                             if (!recipes.isEmpty()) {
                                 if (!RecipeSupporter.MACHINE_RECIPELIST.containsKey(item)) {
-                                    List<MachineRecipe> resultRecipes = new java.util.ArrayList<>();
+                                    List<MachineRecipe> resultRecipes = new ArrayList<>();
                                     for (MachineRecipe machineRecipe : recipes) {
                                         MachineRecipe res = MachineRecipeUtils.stackFromMachine(machineRecipe);
                                         resultRecipes.add(res);
@@ -117,64 +125,6 @@ public class LogiTechStackSupport {
                     }
                 }
             }
-            
-            updateStackMachineList();
         }, 1);
-    }
-    
-    public static void registerLogiTechStackableDirectly() {
-        for (String id : LOGITECH_GENERATORS) {
-            SlimefunItem item = SlimefunItem.getById(id);
-            if (item != null) {
-                int energy = RecipeSupporter.tryGetMachineEnergy(item);
-                RecipeSupporter.STACKMGENERATOR_LIST.remove(item);
-                RecipeSupporter.STACKMACHINE_LIST.remove(item);
-                RecipeSupporter.STACKMGENERATOR_LIST.put(item, energy);
-            }
-        }
-        for (String id : LOGITECH_MACHINES) {
-            SlimefunItem item = SlimefunItem.getById(id);
-            if (item != null && !LOGITECH_GENERATORS.contains(id)) {
-                int energy = RecipeSupporter.tryGetMachineEnergy(item);
-                RecipeSupporter.STACKMGENERATOR_LIST.remove(item);
-                RecipeSupporter.STACKMACHINE_LIST.remove(item);
-                RecipeSupporter.STACKMACHINE_LIST.put(item, energy);
-            }
-        }
-    }
-    
-    private static void updateStackMachineList() {
-        try {
-            Field bwListField = StackMachine.class.getDeclaredField("BW_LIST");
-            bwListField.setAccessible(true);
-            List<SlimefunItem> bwList = (List<SlimefunItem>) bwListField.get(null);
-            
-            Field bwSizeField = StackMachine.class.getDeclaredField("BWSIZE");
-            bwSizeField.setAccessible(true);
-            
-            Field bwEnergyField = StackMachine.class.getDeclaredField("BW_LIST_ENERGYCOMSUME");
-            bwEnergyField.setAccessible(true);
-            
-            Field hasInitField = StackMachine.class.getDeclaredField("hasInit");
-            hasInitField.setAccessible(true);
-            
-            synchronized (bwList) {
-                bwList.clear();
-                int size = RecipeSupporter.STACKMACHINE_LIST.size();
-                bwSizeField.setInt(null, size);
-                
-                int[] energyConsume = new int[size];
-                int i = 0;
-                for (Map.Entry<SlimefunItem, Integer> e : RecipeSupporter.STACKMACHINE_LIST.entrySet()) {
-                    bwList.add(e.getKey());
-                    energyConsume[i] = e.getValue();
-                    ++i;
-                }
-                bwEnergyField.set(null, energyConsume);
-                hasInitField.setBoolean(null, true);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }

@@ -493,6 +493,9 @@ public class MachineRecipeUtils {
         }
         ItemStack[] input = stackIn(makeValidMGInput(recipe1.getInput()));
         ItemStack[] output = recipe1.getOutput();
+        if (input.length == 0 && output.length != 0) {
+            return mgFrom(recipe1.getTicks(), input, output);
+        }
         if (input.length != 0 && output.length != 0) {
             if (input.length == 1
                     && output.length == 1

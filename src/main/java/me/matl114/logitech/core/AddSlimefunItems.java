@@ -104,6 +104,10 @@ public class AddSlimefunItems {
     public static void registerSlimefunItems() {
         Debug.logger("注册附属物品...");
         Debug.logger("注册附属机器...");
+        // 确保 RecipeSupporter 已初始化
+        RecipeSupporter.init();
+        // 调用 LogiTechStackSupport 注册堆叠机器
+        LogiTechStackSupport.registerAllLogiTechStackable();
         CRAFTTYPE_MANUAL_RECIPETYPE.put(CRAFT_MANUAL, BukkitUtils.VANILLA_CRAFTTABLE);
         CRAFTTYPE_MANUAL_RECIPETYPE.put(ENHANCED_CRAFT_MANUAL, ENHANCED_CRAFTING_TABLE);
         CRAFTTYPE_MANUAL_RECIPETYPE.put(MAGIC_WORKBENCH_MANUAL, MAGIC_WORKBENCH);

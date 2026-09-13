@@ -3,6 +3,7 @@ package me.matl114.logitech.core.Machines.Abstracts;
 import com.xzavier0722.mc.plugin.slimefun4.storage.controller.SlimefunBlockData;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemGroup;
 import io.github.thebusybiscuit.slimefun4.api.items.ItemState;
+import me.matl114.logitech.utils.Debug;
 import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItemStack;
 import io.github.thebusybiscuit.slimefun4.api.recipes.RecipeType;
 import io.github.thebusybiscuit.slimefun4.core.attributes.EnergyNetComponent;
@@ -145,6 +146,8 @@ public abstract class AbstractMachine extends CustomSlimefunItem
         if (this.machineRecipes == null || this.machineRecipes.isEmpty()) {
             if (this.machineRecipeSupplier != null) {
                 this.machineRecipes = this.machineRecipeSupplier.get();
+            } else {
+                this.machineRecipes = new ArrayList<>();
             }
             if (this.machineRecipes == null) {
                 this.machineRecipes = new ArrayList<>();

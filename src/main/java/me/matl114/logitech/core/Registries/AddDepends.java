@@ -11,6 +11,9 @@ import io.github.thebusybiscuit.slimefun4.core.handlers.GlobalItemHandler;
 import io.github.thebusybiscuit.slimefun4.implementation.Slimefun;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.config.Config;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -513,6 +516,8 @@ public class AddDepends {
                                 AddItem.ABSTRACT_INGOT));
                 ReflectUtils.invokeSetRecursively(INFINITY_GEOQURRY, "ticksPerOutput", 6);
                 ReflectUtils.invokeSetRecursively(INFINITY_GEOQURRY, "energyPerTick", 4500);
+                // 包装地理资源机器以提供显示配方
+                INFINITY_GEOQURRY = (SlimefunItem) me.matl114.logitech.core.Machines.GEOMachines.GeoResourceMachineWrapper.createWrapper(INFINITY_GEOQURRY);
                 INFINITY_GEOQURRY.register(plugin);
             }
         } catch (Throwable e) {
@@ -543,6 +548,8 @@ public class AddDepends {
                 ReflectUtils.invokeSetRecursively(ANNIHILATION_GEOQURRY, "ticksPerOutput", 1);
                 ReflectUtils.invokeSetRecursively(ANNIHILATION_GEOQURRY, "energyPerTick", 7500);
                 OptimizedGeoQuarry.optimizeTickMethod(infinityGeoMiner);
+                // 包装地理资源机器以提供显示配方
+                ANNIHILATION_GEOQURRY = (SlimefunItem) me.matl114.logitech.core.Machines.GEOMachines.GeoResourceMachineWrapper.createWrapper(ANNIHILATION_GEOQURRY);
                 ANNIHILATION_GEOQURRY.register(plugin);
             }
         } catch (Throwable e) {

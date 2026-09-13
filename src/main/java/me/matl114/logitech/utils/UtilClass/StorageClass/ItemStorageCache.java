@@ -171,7 +171,7 @@ public class ItemStorageCache extends ItemSlotPusher { // extends ItemPusher
                 return null;
             }
             ItemStorageCache cache = new LocationStorageProxy(stored, source, sourceMeta, saveSlot, type, loc);
-            cache.setAmount(lp.getAmount(loc));
+            cache.setAmount(lp.getItemAmount(loc, stored));
             cache.storageAmount = cache.getAmountLong();
             cache.dirty = false;
             return cache;
@@ -232,6 +232,14 @@ public class ItemStorageCache extends ItemSlotPusher { // extends ItemPusher
 
     public long getStorageAmountLong() {
         return this.storageAmount;
+    }
+
+    public StorageType getStorageType() {
+        return storageType;
+    }
+
+    public ItemMeta getSourceMeta() {
+        return sourceMeta;
     }
 
     /**

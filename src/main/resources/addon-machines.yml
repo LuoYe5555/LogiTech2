@@ -178,7 +178,6 @@ MomoTech:
     type: machine
     energy: 0
   MOMOTECH_SALT_GENERATOR:
-    
     recipe:
       '0':
         output:
@@ -6430,4 +6429,35 @@ RykenSlimefunCustomizer:
           '1': OT_PLC_3
         output:
           '1': LOGITECH_NEATHER_FEAT
-        tick: 8
+        tick: 16
+  OT_岩脉爆震装置:
+    mode: w
+    type: template
+    energy: -1
+    recipe:
+      '0':
+        template_input:
+          '1': OT_ZSJ_3
+        output:
+          type: "ra"
+          item:
+            '1': COMPRESSED_COBBLESTONE_1
+            '2': COMPRESSED_COBBLESTONE_2
+            '3': COMPRESSED_COBBLESTONE_3
+            '4': COMPRESSED_COBBLESTONE_4
+            '5': COMPRESSED_COBBLESTONE_5
+            '6': OT_YSYS_6
+            '7': OT_YSYS_7
+            '8': OT_YSYS_8
+            '9': OT_YSYS_9
+          weight:
+            '1': 1
+            '2': 1
+            '3': 1
+            '4': 1
+            '5': 1
+            '6': 1
+            '7': 1
+            '8': 1
+            '9': 1
+        tick: 2
