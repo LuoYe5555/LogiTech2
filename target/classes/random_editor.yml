@@ -1,0 +1,3 @@
+random_editor:
+  max_enchant_level: 255 #附魔上限
+  max_attribute_value: 1024 #属性基值上限
