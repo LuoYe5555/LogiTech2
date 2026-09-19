@@ -646,7 +646,7 @@ public class WorldUtils {
             add(Material.ACACIA_SIGN);
             add(Material.BAMBOO_SLAB);
             add(Material.PURPUR_STAIRS);
-            add(Material.CHAIN);
+            add(Utils.chainMaterial());
             add(Material.POLISHED_DIORITE_STAIRS);
             add(Material.CONDUIT);
             add(Material.LIGHT_GRAY_CANDLE);
@@ -1080,7 +1080,7 @@ public class WorldUtils {
             Debug.debug("CraftBlockStateClass: " + CraftBlockStateClass.getName());
             invokeBlockStateSuccess = true;
         } catch (Throwable e) {
-            Debug.logger(e);
+            Debug.debug("Failed to init CraftBlockState reflection: " + e.getMessage());
         }
     }
 

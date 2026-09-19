@@ -132,7 +132,6 @@ public class RandomEditor extends AbstractMachine implements FinalAltarCore.Fina
                     resultDisplay,
                     AddUtils.getInfoShow(
                             "&f注意 - &c原版机制",
-                            "&7高版本专属:1.20.5+",
                             "&7属性有风险,强化需谨慎,",
                             "&7操作不规范,装备全白搭",
                             "&c由于高版本属性的等级限制,可能会出现等级过高造成属性重置",

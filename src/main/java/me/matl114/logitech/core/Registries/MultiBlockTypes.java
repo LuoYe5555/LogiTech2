@@ -1,6 +1,7 @@
 package me.matl114.logitech.core.Registries;
 
 import java.util.HashSet;
+import me.matl114.logitech.utils.Utils;
 import me.matl114.logitech.utils.UtilClass.MultiBlockClass.CubeMultiBlock.CubeMultiBlockType;
 import me.matl114.logitech.utils.UtilClass.MultiBlockClass.MultiBlockService;
 import me.matl114.logitech.utils.UtilClass.MultiBlockClass.MultiBlockType;
@@ -280,7 +281,7 @@ public class MultiBlockTypes {
             String wailId = Material.NETHERITE_BLOCK.toString();
             String glassId = Material.GLASS.toString();
             String decorationId = Material.CRYING_OBSIDIAN.toString();
-            String columnId = Material.CHAIN.toString();
+            String columnId = Utils.chainMaterial().toString();
             String interfaceId = "smith.interface";
             String liquidId = Material.LAVA.toString();
             // y=-1 && y=5
@@ -367,7 +368,7 @@ public class MultiBlockTypes {
             materials.add(Material.NETHERITE_BLOCK);
             materials.add(Material.GLASS);
             materials.add(Material.CRYING_OBSIDIAN);
-            materials.add(Material.CHAIN);
+            materials.add(Utils.chainMaterial());
             addAll(materials);
         }
     };

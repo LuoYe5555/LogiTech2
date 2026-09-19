@@ -1571,23 +1571,23 @@ public class RecipeSupporter {
                                 new ProbItemStack(new ItemStack(Material.DRAGON_EGG), 0.003)));
                 put(EntityType.WARDEN, Utils.recipe("SCULK_CATALYST"));
                 // 投掷物
-                put(EntityType.THROWN_EXP_BOTTLE, Utils.recipe("EXPERIENCE_BOTTLE"));
+                put(EntityType.EXPERIENCE_BOTTLE, Utils.recipe("EXPERIENCE_BOTTLE"));
                 put(EntityType.EGG, Utils.recipe("EGG"));
                 put(EntityType.ENDER_PEARL, Utils.recipe("ENDER_PEARL"));
-                put(EntityType.ENDER_CRYSTAL, Utils.recipe("END_CRYSTAL"));
+                put(EntityType.END_CRYSTAL, Utils.recipe("END_CRYSTAL"));
                 put(EntityType.ITEM_FRAME, Utils.recipe("ITEM_FRAME"));
                 put(EntityType.GLOW_ITEM_FRAME, Utils.recipe("GLOW_ITEM_FRAME"));
                 put(EntityType.PAINTING, Utils.recipe("PAINTING"));
-                put(EntityType.BOAT, Utils.recipe("OAK_BOAT"));
-                put(EntityType.CHEST_BOAT, Utils.recipe("OAK_CHEST_BOAT"));
+                put(Utils.boatEntity(), Utils.recipe("OAK_BOAT"));
+                put(Utils.chestBoatEntity(), Utils.recipe("OAK_CHEST_BOAT"));
                 put(EntityType.MINECART, Utils.recipe("MINECART"));
-                put(EntityType.MINECART_CHEST, Utils.recipe("CHEST_MINECART"));
-                // put(EntityType.MINECART_COMMAND, Utils.recipe("COMMAND_BLOCK_MINECART"));
-                put(EntityType.MINECART_FURNACE, Utils.recipe("FURNACE_MINECART"));
-                put(EntityType.MINECART_HOPPER, Utils.recipe("HOPPER_MINECART"));
-                put(EntityType.MINECART_TNT, Utils.recipe("TNT_MINECART"));
+                put(EntityType.CHEST_MINECART, Utils.recipe("CHEST_MINECART"));
+                // put(EntityType.COMMAND_BLOCK_MINECART, Utils.recipe("COMMAND_BLOCK_MINECART"));
+                put(EntityType.FURNACE_MINECART, Utils.recipe("FURNACE_MINECART"));
+                put(EntityType.HOPPER_MINECART, Utils.recipe("HOPPER_MINECART"));
+                put(EntityType.TNT_MINECART, Utils.recipe("TNT_MINECART"));
                 put(
-                        EntityType.MINECART_MOB_SPAWNER,
+                        EntityType.SPAWNER_MINECART,
                         Utils.recipe("MINECART", AddUtils.probItemStackFactory(AddUtils.resolveItem("SPAWNER"), 1)));
                 // NPC
                 put(EntityType.VILLAGER, Utils.recipe("PAPER", "BREWING_STAND"));

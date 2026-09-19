@@ -492,6 +492,7 @@ me\matl114\logitech\utils\UtilClass\CommandClass\CommandShell$16.class
 me\matl114\logitech\core\Machines\Abstracts\AbstractEnergyProvider.class
 me\matl114\logitech\core\Machines\Electrics\LineEnergyCollector.class
 me\matl114\logitech\utils\UtilClass\ItemClass\EquivalItemStack.class
+me\matl114\matlib\utils\version\Version.class
 me\matl114\logitech\core\Depends\NetworksQuantumStorageAdapter$CacheEntry.class
 me\matl114\logitech\core\Machines\AutoMachines\SpecialCrafter.class
 me\matl114\logitech\listeners\Listeners\CombatListener.class

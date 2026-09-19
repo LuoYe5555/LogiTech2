@@ -17,7 +17,7 @@ public class PostSetupTasks {
 
     public static void schedulePostRegister() {
         startPostRegister = true;
-        Debug.logger("START ADDON POSTREGISTER TASKS");
+        Debug.debug("START ADDON POSTREGISTER TASKS");
         for (Runnable t : registerTasks) {
             t.run();
         }

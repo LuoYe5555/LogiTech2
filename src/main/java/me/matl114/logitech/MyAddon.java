@@ -194,7 +194,7 @@ public class MyAddon extends JavaPlugin implements SlimefunAddon {
         }
         //        try {
         //            if( !Slimefun.getMinecraftVersion().isAtLeast(MinecraftVersion.MINECRAFT_1_20) ){
-        //                getLogger().log(Level.SEVERE, "本插件需要在MC 1.20/1.20.x的版本运行");
+        //                getLogger().log(Level.SEVERE, "本插件需要在MC 1.21/1.21.x的版本运行");
         //                getLogger().log(Level.SEVERE, "当出现该报错时,作者对一切后续的报错不负责");
         //            }else{
         //                Debug.logger("MC最低版本检测通过");

@@ -92,11 +92,11 @@ public class LogiTechStackSupport {
                     RecipeSupporter.STACKMACHINE_LIST.remove(item);
                     RecipeSupporter.STACKMACHINE_LIST.put(item, energy);
                     machineCount++;
-                    Debug.logger("已注册堆叠机器: " + id);
+                    Debug.debug("已注册堆叠机器: " + id);
                 }
             }
 
-            Debug.logger("LogiTech 堆叠机器注册完成: " + generatorCount + " 个生成器, " + machineCount + " 个机器");
+            Debug.debug("LogiTech 堆叠机器注册完成: " + generatorCount + " 个生成器, " + machineCount + " 个机器");
             
             for (SlimefunItem item : io.github.thebusybiscuit.slimefun4.implementation.Slimefun.getRegistry().getEnabledSlimefunItems()) {
                 if (item instanceof AbstractMachine) {

@@ -268,11 +268,10 @@ public class TransportUtils {
                     lockFactory,
                     content -> AdaptorInvocation.createASM(lockFactory.getClass(), content));
             asyncMode = true;
-            Debug.logger("Slimefun Async Cargo Factory Adaptor created successfully");
-            Debug.logger("Starting Transportation task async Mode");
+            Debug.debug("Slimefun Async Cargo Factory Adaptor created successfully");
+            Debug.debug("Starting Transportation task async Mode");
         } catch (Throwable anyError) {
-            Debug.severe("Slimefun Async Cargo Factory not found!");
-            Debug.severe("Stopping Transportation task async Mode");
+            Debug.debug("Slimefun Async Cargo Factory not found, falling back to default lock factory: " + anyError.getMessage());
             transportationLockFactory = new DefaultLockFactory<>();
             asyncMode = false;
         }

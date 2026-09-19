@@ -7,22 +7,29 @@ import org.bukkit.Location;
 
 public interface MultiCraftType extends RecipeLock {
     static int getRecipeTypeIndex(Location loc) {
+        if (loc == null) {
+            return -1;
+        }
+        String a = StorageCacheUtils.getData(loc, "craftType");
+        if (a == null) {
+            return -1;
+        }
         try {
-            String a = StorageCacheUtils.getData(loc, "craftType");
             return Integer.parseInt(a);
-
-        } catch (NumberFormatException a) {
+        } catch (NumberFormatException e) {
             setRecipeTypeIndex(loc, -1);
             return -1;
         }
     }
 
     static int getRecipeTypeIndex(SlimefunBlockData data) {
+        String a = data.getData("craftType");
+        if (a == null) {
+            return -1;
+        }
         try {
-            String a = data.getData("craftType");
             return Integer.parseInt(a);
-
-        } catch (NumberFormatException a) {
+        } catch (NumberFormatException e) {
             data.setData("craftType", "-1");
             return -1;
         }
