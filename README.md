@@ -6,4 +6,4 @@
 - Slimefun
 - GuizhanLibPlugin
  ## 版本
-- Mc：1.20+
+- Mc：1.21+
