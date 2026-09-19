@@ -141,21 +141,21 @@ public class StackMGenerator extends MMGenerator implements MultiCraftType, Impo
     public static boolean hasInit = false;
 
     public static List<SlimefunItem> getMachineList() {
-        if (!hasInit)
-            synchronized (BW_LIST) {
-                if (BW_LIST.isEmpty()) {
-                    RecipeSupporter.init();
-                    BWSIZE = RecipeSupporter.STACKMGENERATOR_LIST.size();
-                    BW_LIST_ENERGYCOMSUME = new int[BWSIZE + 1];
-                    int i = 0;
-                    for (Map.Entry<SlimefunItem, Integer> e : RecipeSupporter.STACKMGENERATOR_LIST.entrySet()) {
-                        BW_LIST.add(e.getKey());
-                        BW_LIST_ENERGYCOMSUME[i] = e.getValue();
-                        ++i;
-                    }
-                    hasInit = true;
+        synchronized (BW_LIST) {
+            int currentSize = RecipeSupporter.STACKMGENERATOR_LIST.size();
+            if (currentSize != BWSIZE) {
+                BW_LIST.clear();
+                BWSIZE = currentSize;
+                BW_LIST_ENERGYCOMSUME = new int[BWSIZE + 1];
+                int i = 0;
+                for (Map.Entry<SlimefunItem, Integer> e : RecipeSupporter.STACKMGENERATOR_LIST.entrySet()) {
+                    BW_LIST.add(e.getKey());
+                    BW_LIST_ENERGYCOMSUME[i] = e.getValue();
+                    ++i;
                 }
             }
+            hasInit = true;
+        }
         return BW_LIST;
     }
 

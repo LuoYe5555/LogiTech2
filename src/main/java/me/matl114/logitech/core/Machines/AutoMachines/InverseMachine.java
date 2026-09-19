@@ -133,47 +133,47 @@ public class InverseMachine extends AbstractAdvancedProcessor {
     public static HashMap<SlimefunItem, List<MachineRecipe>> INVERSED_RECIPES = new LinkedHashMap<>();
 
     public static List<SlimefunItem> getMachineList() {
-        if (!hasInit)
-            synchronized (BW_LIST) {
-                if (BW_LIST.isEmpty()) {
-                    RecipeSupporter.init();
-                    BWSIZE = RecipeSupporter.STACKMACHINE_LIST.size();
-                    BW_LIST_ENERGYCOMSUME = new int[BWSIZE];
-                    int i = 0;
-                    for (Map.Entry<SlimefunItem, Integer> e : RecipeSupporter.STACKMACHINE_LIST.entrySet()) {
-                        List<MachineRecipe> originRecipes = RecipeSupporter.MACHINE_RECIPELIST.get(e.getKey());
-                        if (originRecipes == null) {
-                            originRecipes = new ArrayList<>();
-                        }
-                        List<MachineRecipe> inversedRecipes = new ArrayList<>();
-                        loop:
-                        for (MachineRecipe r : originRecipes) {
-                            ItemStack[] outputItem = r.getOutput();
-                            for (int j = 0; j < outputItem.length; j++) {
-                                if (outputItem[j] instanceof AbstractItemStack) {
-                                    continue loop;
-                                }
-                            }
-                            ItemStack[] inputItem = r.getInput();
-                            for (int j = 0; j < inputItem.length; j++) {
-                                if (inputItem[j] instanceof AbstractItemStack) {
-                                    continue loop;
-                                }
-                            }
-                            inversedRecipes.add(new StackMachineRecipe(0, outputItem, inputItem));
-                        }
-                        if (inversedRecipes.isEmpty()) {
-                            continue;
-                        }
-                        BW_LIST.add(e.getKey());
-                        BW_LIST_ENERGYCOMSUME[i] = e.getValue();
-                        INVERSED_RECIPES.put(e.getKey(), inversedRecipes);
-                        ++i;
+        synchronized (BW_LIST) {
+            int currentSize = RecipeSupporter.STACKMACHINE_LIST.size();
+            if (currentSize != BWSIZE) {
+                BW_LIST.clear();
+                INVERSED_RECIPES.clear();
+                BW_LIST_ENERGYCOMSUME = new int[currentSize];
+                int i = 0;
+                for (Map.Entry<SlimefunItem, Integer> e : RecipeSupporter.STACKMACHINE_LIST.entrySet()) {
+                    List<MachineRecipe> originRecipes = RecipeSupporter.MACHINE_RECIPELIST.get(e.getKey());
+                    if (originRecipes == null) {
+                        originRecipes = new ArrayList<>();
                     }
-                    BWSIZE = i;
-                    hasInit = true;
+                    List<MachineRecipe> inversedRecipes = new ArrayList<>();
+                    loop:
+                    for (MachineRecipe r : originRecipes) {
+                        ItemStack[] outputItem = r.getOutput();
+                        for (int j = 0; j < outputItem.length; j++) {
+                            if (outputItem[j] instanceof AbstractItemStack) {
+                                continue loop;
+                            }
+                        }
+                        ItemStack[] inputItem = r.getInput();
+                        for (int j = 0; j < inputItem.length; j++) {
+                            if (inputItem[j] instanceof AbstractItemStack) {
+                                continue loop;
+                            }
+                        }
+                        inversedRecipes.add(new StackMachineRecipe(0, outputItem, inputItem));
+                    }
+                    if (inversedRecipes.isEmpty()) {
+                        continue;
+                    }
+                    BW_LIST.add(e.getKey());
+                    BW_LIST_ENERGYCOMSUME[i] = e.getValue();
+                    INVERSED_RECIPES.put(e.getKey(), inversedRecipes);
+                    ++i;
                 }
+                BWSIZE = i;
             }
+            hasInit = true;
+        }
         return BW_LIST;
     }
 

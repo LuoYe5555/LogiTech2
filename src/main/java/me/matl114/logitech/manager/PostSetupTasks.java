@@ -18,9 +18,11 @@ public class PostSetupTasks {
     public static void schedulePostRegister() {
         startPostRegister = true;
         Debug.debug("START ADDON POSTREGISTER TASKS");
+        // 先重扫一遍外部插件可能后注册的机器（如 RSC）
+        // 必须在 initCustomMenus() 之前，否则 MACHINE_RECIPELIST 的快照会漏掉它们
+        RecipeSupporter.rescanMachineRecipes();
         for (Runnable t : registerTasks) {
             t.run();
         }
-        RecipeSupporter.init();
     }
 }
