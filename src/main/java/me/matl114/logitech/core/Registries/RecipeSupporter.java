@@ -35,6 +35,7 @@ import me.matl114.logitech.utils.Algorithms.PairList;
 import me.matl114.logitech.utils.UtilClass.ItemClass.ProbItemStack;
 import me.matl114.logitech.utils.UtilClass.RecipeClass.ImportRecipes;
 import me.matl114.logitech.utils.UtilClass.RecipeClass.MGeneratorRecipe;
+import me.matl114.logitech.utils.UtilClass.RecipeClass.StackMachineRecipe;
 import me.matl114.matlib.implement.slimefun.core.CustomRecipeType;
 import me.matl114.matlib.utils.version.VersionedRegistry;
 import me.mrCookieSlime.Slimefun.Objects.SlimefunItem.abstractItems.AContainer;
@@ -712,7 +713,16 @@ public class RecipeSupporter {
                 applyToMachine = method.endsWith("+");
                 if (config.contains(machinepath + ".recipetype")) {
                     recipeType = config.getString(machinepath + ".recipetype");
-                    commonTick = config.getInt(machinepath + ".time");
+                    // 支持 time: / tick: key；-1 表示保持原机器 ticksPerOutput（和 energy: -1 同理）
+                    try {
+                        commonTick = config.getInt(machinepath + ".time");
+                    } catch (Throwable ignored) {
+                        try { commonTick = config.getInt(machinepath + ".tick"); } catch (Throwable ignored2) {}
+                    }
+                    if (commonTick == -1) {
+                        Integer tpo = (Integer) ReflectUtils.invokeGetRecursively(machine, Settings.FIELD, "ticksPerOutput");
+                        commonTick = (tpo != null ? tpo : 1) - 1;
+                    }
                 } else {
                     machineRecipe = config.getKeys(machinepath + ".recipe");
                 }
@@ -723,7 +733,46 @@ public class RecipeSupporter {
                 Debug.debug(e);
             }
             List<MachineRecipe> recipes = new ArrayList<>(12);
-            if (recipeType != null) {
+            // 支持 recipetype: GEO 或 type: GEO —— 自动取所有注册的 GEOResource 合成 1 条随机输出配方
+            boolean isGeoType = (recipeType != null && recipeType.equalsIgnoreCase("GEO"))
+                    || (recipeType == null && "GEO".equalsIgnoreCase(config.getString(machinepath + ".type")));
+            if (isGeoType) {
+                try {
+                    var geoResources = Slimefun.getRegistry().getGEOResources();
+                    List<ItemStack> geoOutputs = new ArrayList<>();
+                    if (geoResources != null) {
+                        for (Object geoResourceObj : geoResources.values()) {
+                            try {
+                                boolean obtainable = true;
+                                try {
+                                    obtainable = (Boolean) geoResourceObj.getClass()
+                                            .getMethod("isObtainableFromGEOMiner").invoke(geoResourceObj);
+                                } catch (Throwable ignored) {}
+                                if (obtainable) {
+                                    Object itemObj = geoResourceObj.getClass()
+                                            .getMethod("getItem").invoke(geoResourceObj);
+                                    if (itemObj instanceof ItemStack geoItem) {
+                                        geoOutputs.add(geoItem.clone());
+                                    }
+                                }
+                            } catch (Throwable e) {
+                                Debug.debug("Error resolving GEOResource for " + machineId + ": " + e.getMessage());
+                            }
+                        }
+                    }
+                    if (!geoOutputs.isEmpty()) {
+                        ItemStack[] outputArr = geoOutputs.toArray(new ItemStack[0]);
+                        StackMachineRecipe r = isGenerator
+                                ? new MGeneratorRecipe(commonTick, new ItemStack[0], outputArr)
+                                : MachineRecipeUtils.stackFrom(commonTick, new ItemStack[0], outputArr);
+                        r.setRandomOutput(true);
+                        recipes.add(r);
+                    }
+                    Debug.logger("[GEO CONFIG] " + machineId + " -> 1 recipe with " + geoOutputs.size() + " random outputs");
+                } catch (Throwable e) {
+                    Debug.logger("ERROR WHILE LOADING MACHINE CONFIG: GEO type failed for %s: %s".formatted(machineId, e.getMessage()));
+                }
+            } else if (recipeType != null) {
                 try {
                     find_possible_recipe:
                     {
@@ -962,18 +1011,35 @@ public class RecipeSupporter {
                 continue;
             }
             String type = null;
+            String recipetype = null;
             int energy = -1;
             try {
                 type = config.getString(machinepath + ".type");
+                recipetype = config.getString(machinepath + ".recipetype");
                 energy = config.getInt(machinepath + ".energy");
             } catch (Throwable e) {
                 if (forceload)
                     Debug.logger("ERROR WHILE LOADING MACHINE CONFIG: error config format in %s".formatted(machineId));
             }
-            if (type == null) {
+            boolean isGeo = "GEO".equalsIgnoreCase(recipetype);
+            if (type == null && !isGeo) {
                 continue;
             }
-            if (type.startsWith("gen")) {
+            // recipetype: GEO 的机器——和 type: gen/mach 一致：-1 表示保持原机器值
+            if (isGeo) {
+                if (STACKMGENERATOR_LIST.containsKey(machine)) {
+                    Integer cur = STACKMGENERATOR_LIST.get(machine);
+                    if (replaceEnergy || energy != -1) {
+                        STACKMGENERATOR_LIST.put(machine, energy);
+                    } // energy==-1 && !replaceEnergy → 保持原值
+                }
+                if (STACKMACHINE_LIST.containsKey(machine)) {
+                    Integer cur = STACKMACHINE_LIST.get(machine);
+                    if (replaceEnergy || energy != -1) {
+                        STACKMACHINE_LIST.put(machine, energy);
+                    }
+                }
+            } else if (type.startsWith("gen")) {
                 Integer en = STACKMACHINE_LIST.remove(machine);
                 if (replaceEnergy) {
                     STACKMGENERATOR_LIST.put(machine, energy);
@@ -1186,7 +1252,21 @@ public class RecipeSupporter {
     private static final boolean RSC_DEBUG = false;
 
     /**
-     * 判断机器是否是地理资源矿机
+     * 判断是否是 Slimefun 原版的 GEO 机器（GEOMiner / OilPump）—— 排除出堆叠列表
+     * 用户如果需要 GEO 产出能力，通过 addon-machines.yml recipetype: GEO 自行选择目标机器
+     */
+    private static boolean isSlimefunGeoMachine(SlimefunItem item) {
+        if (item == null) return false;
+        String id = item.getId();
+        if ("GEO_MINER".equals(id) || "OIL_PUMP".equals(id)) return true;
+        if (ReflectUtils.isExtendedFrom(item.getClass(), ".GEOMiner")
+                || ReflectUtils.isExtendedFrom(item.getClass(), ".OilPump")) return true;
+        return false;
+    }
+
+    /**
+     * 判断机器是否是地理资源矿机（仅用于 addon-machines.yml recipetype: GEO 之外的自动检测）
+     * 注意：GEOMiner/OilPump 不再自动进堆叠，用户通过 recipetype: GEO 自行选择目标机器
      */
     private static boolean isGeoResourceMachine(SlimefunItem item) {
         if (item == null) {
@@ -1196,12 +1276,12 @@ public class RecipeSupporter {
         if (item == AddDepends.INFINITY_GEOQURRY || item == AddDepends.ANNIHILATION_GEOQURRY) {
             return true;
         }
-        // 识别外部附属的GEO_QUARRY
         String id = item.getId();
+        // ID 包含 GEO_QUARRY / GEOQURRY（外部附属老款）
         if (id.contains("GEO_QUARRY") || id.contains("GEOQURRY")) {
             return true;
         }
-        // 识别GEOQuarry类
+        // 识别 GEOQuarry 类（不限包路径）——仅限老版附属，不包含 Slimefun 原版 GEOMiner/OilPump
         if (ReflectUtils.isExtendedFrom(item.getClass(), ".GEOQuarry")) {
             return true;
         }
@@ -2018,6 +2098,8 @@ public class RecipeSupporter {
     private static void updateStackLists() {
         for (Map.Entry<SlimefunItem, List<MachineRecipe>> e : MACHINE_RECIPELIST.entrySet()) {
             SlimefunItem item = e.getKey();
+            // 排除 Slimefun 原版 GEO 机器（GEOMiner/OilPump）—— 它们的区块产出机制不适合堆叠
+            if (isSlimefunGeoMachine(item)) continue;
             if (item instanceof ImportRecipes ir && ir.isConflict()) {
                 continue;
             }
@@ -2069,6 +2151,14 @@ public class RecipeSupporter {
         }
         hasRescanned = true;
         int added = 0;
+        // 1. GEO 类机器在首轮 static 扫描时 GEOResources 可能还没注册完附属资源
+        //    强制清除让它们用全量 GEOResource 重扫
+        for (SlimefunItem item : new ArrayList<>(MACHINE_RECIPELIST.keySet())) {
+            if (isGeoResourceMachine(item) || isSlimefunGeoMachine(item)) {
+                MACHINE_RECIPELIST.remove(item);
+            }
+        }
+        // 2. 扫新注册的 SlimefunItem（RSC 等后加载附属）
         for (SlimefunItem item : Slimefun.getRegistry().getEnabledSlimefunItems()) {
             if (MACHINE_RECIPELIST.containsKey(item)) {
                 continue; // 已经扫过了，跳过
@@ -2081,12 +2171,36 @@ public class RecipeSupporter {
                 Debug.logger("rescanMachineRecipes unexpected exception for " + item.getId() + ": " + e.getMessage());
             }
         }
-        if (added > 0) {
-            Debug.logger("[RSC FIX] 重扫发现 " + added + " 个新机器，更新堆叠列表...");
-            updateStackLists();
-        } else {
-            Debug.logger("[RSC FIX] 重扫完成，无新机器需要处理");
+        // 3. 重新加载 addon-machines.yml 配置（关键：此时 GEOResources 已全部注册完毕）
+        //    loadMachineModification 会覆盖 MACHINE_RECIPELIST 中已有的条目（line 913-916 的 clear+addAll）
+        try {
+            List<String> enableAddons = ConfigLoader.INNER_MACHINES.getStringList("enable");
+            if (!enableAddons.isEmpty()) {
+                for (String enableAddon : enableAddons) {
+                    loadMachineModification(ConfigLoader.INNER_MACHINES, enableAddon, false);
+                }
+            }
+        } catch (Throwable w) {
         }
+        try {
+            loadMachineModification(ConfigLoader.MACHINES, "recipe_modify", true);
+        } catch (Throwable e) {
+        }
+        // 4. 重新应用 loadStackMachineConfig（energy 配置）
+        try {
+            List<String> enableAddons = ConfigLoader.INNER_MACHINES.getStringList("enable");
+            if (!enableAddons.isEmpty()) {
+                for (String enableAddon : enableAddons) {
+                    loadStackMachineConfig(ConfigLoader.INNER_MACHINES, enableAddon, false, false);
+                }
+            }
+        } catch (Throwable w) {
+        }
+        loadStackMachineConfig(ConfigLoader.MACHINES, "stack_type", true, true);
+
+        // 5. 更新堆叠列表
+        updateStackLists();
+        Debug.debug("[RSC FIX] 重扫完成，新增 " + added + " 个机器");
     }
 
     static {
@@ -2273,7 +2387,11 @@ public class RecipeSupporter {
                 return false;
             }
         } else if (ReflectUtils.isExtendedFrom(item.getClass(), ".GEOQuarry")
-                || (item.getId().contains("GEO_QUARRY") || item.getId().contains("GEOQURRY"))) {
+                || ReflectUtils.isExtendedFrom(item.getClass(), ".GEOMiner")
+                || ReflectUtils.isExtendedFrom(item.getClass(), ".OilPump")
+                || item.getId().contains("GEO_QUARRY")
+                || item.getId().contains("GEOQURRY")
+                || item.getId().contains("GEO_MINER")) {
             int ticks = 0;
             try {
                 Integer ticksPerOutput = (Integer) ReflectUtils.invokeGetRecursively(item, Settings.FIELD, "ticksPerOutput");
@@ -2285,37 +2403,64 @@ public class RecipeSupporter {
             }
             try {
                 List<MachineRecipe> geoRecipes = new ArrayList<>();
-                for (SlimefunItem sfItem : Slimefun.getRegistry().getEnabledSlimefunItems()) {
-                    if (sfItem.getRecipeType() == RecipeType.GEO_MINER) {
-                        try {
-                            Object geoResourceObj = sfItem;
-                            boolean obtainable = false;
+                // 优先用 Slimefun Registry 的 getGEOResources()（和 Slimefun 原版 GEOMiner 一致，最全）
+                try {
+                    var geoResources = Slimefun.getRegistry().getGEOResources();
+                    if (geoResources != null) {
+                        for (Object geoResourceObj : geoResources.values()) {
                             try {
-                                obtainable = (Boolean) geoResourceObj.getClass().getMethod("isObtainableFromGEOMiner").invoke(geoResourceObj);
-                            } catch (Throwable e) {
-                                obtainable = true;
-                            }
-                            if (obtainable) {
-                                Object itemObj = geoResourceObj.getClass().getMethod("getItem").invoke(geoResourceObj);
-                                if (itemObj instanceof ItemStack) {
-                                    geoRecipes.add(MachineRecipeUtils.mgFrom(ticks, new ItemStack[0], new ItemStack[]{((ItemStack) itemObj).clone()}));
+                                boolean obtainable = true;
+                                try {
+                                    obtainable = (Boolean) geoResourceObj.getClass()
+                                            .getMethod("isObtainableFromGEOMiner").invoke(geoResourceObj);
+                                } catch (Throwable e) { /* 默认 true */ }
+                                if (obtainable) {
+                                    Object itemObj = geoResourceObj.getClass()
+                                            .getMethod("getItem").invoke(geoResourceObj);
+                                    if (itemObj instanceof ItemStack) {
+                                        geoRecipes.add(MachineRecipeUtils.mgFrom(
+                                                ticks, new ItemStack[0],
+                                                new ItemStack[]{((ItemStack) itemObj).clone()}));
+                                    }
                                 }
+                            } catch (Throwable e) {
+                                Debug.debug("Error getting GEOResource item: " + e.getMessage());
                             }
-                        } catch (Throwable e) {
-                            Debug.debug("Error getting GEOResource item for " + sfItem.getId() + ": ", e.getMessage());
+                        }
+                    }
+                } catch (Throwable e) {
+                    Debug.debug("getGEOResources() not available, falling back to GEO_MINER scan: " + e.getMessage());
+                }
+                // 回退/补充：扫 getEnabledSlimefunItems 里 RecipeType.GEO_MINER 的
+                if (geoRecipes.isEmpty()) {
+                    for (SlimefunItem sfItem : Slimefun.getRegistry().getEnabledSlimefunItems()) {
+                        if (sfItem.getRecipeType() == RecipeType.GEO_MINER) {
+                            try {
+                                Object geoResourceObj = sfItem;
+                                boolean obtainable = false;
+                                try {
+                                    obtainable = (Boolean) geoResourceObj.getClass()
+                                            .getMethod("isObtainableFromGEOMiner").invoke(geoResourceObj);
+                                } catch (Throwable ex) {
+                                    obtainable = true;
+                                }
+                                if (obtainable) {
+                                    Object itemObj = geoResourceObj.getClass().getMethod("getItem").invoke(geoResourceObj);
+                                    if (itemObj instanceof ItemStack) {
+                                        geoRecipes.add(MachineRecipeUtils.mgFrom(ticks, new ItemStack[0],
+                                                new ItemStack[]{((ItemStack) itemObj).clone()}));
+                                    }
+                                }
+                            } catch (Throwable ex) {
+                                Debug.debug("Error getting GEOResource item for " + sfItem.getId() + ": " + ex.getMessage());
+                            }
                         }
                     }
                 }
                 if (geoRecipes.isEmpty()) {
-                    List<MachineRecipe> providedRecipes = PROVIDED_SHAPED_RECIPES.get(RecipeType.GEO_MINER);
-                    if (providedRecipes != null && !providedRecipes.isEmpty()) {
-                        for (MachineRecipe recipe : providedRecipes) {
-                            geoRecipes.add(MachineRecipeUtils.mgFrom(ticks, new ItemStack[0], recipe.getOutput()));
-                        }
-                    } else {
-                        geoRecipes.add(MachineRecipeUtils.mgFrom(ticks, new ItemStack[0], new ItemStack[0]));
-                    }
+                    geoRecipes.add(MachineRecipeUtils.mgFrom(ticks, new ItemStack[0], new ItemStack[0]));
                 }
+                Debug.logger("[GEO SCAN] " + item.getId() + " -> " + geoRecipes.size() + " recipes");
                 recipes.addAll(geoRecipes);
             } catch (Throwable e) {
                 Debug.logger("Error in loading Slimefun Item %s StackMachineRecipe: %s"

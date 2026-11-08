@@ -460,41 +460,56 @@ public class StackMGenerator extends MMGenerator implements MultiCraftType, Impo
                     List<MachineRecipe> lst = RecipeSupporter.MACHINE_RECIPELIST.get(
                             getMachineList().get(index));
                     int len = lst.size();
-                    int index2 = DataCache.getLastRecipe(data);
-                    if (index2 >= 0 && index2 < len) {
-                        MachineRecipe nextP = lst.get(index2);
-                        if (tick == 0) {
-                            int maxMultiple = db.getInt(3);
-                            if (maxMultiple == 1) {
-                                CraftUtils.pushItems(nextP.getOutput(), inv, getOutputSlots(), CRAFT_PROVIDER);
-                            } else {
-
-                                CraftUtils.multiPushItems(
-                                        nextP.getOutput(), inv, getOutputSlots(), maxMultiple, CRAFT_PROVIDER);
-                            }
-                        }
-                        int maxCraftlimit = getCraftLimit(b, inv);
-                        int tickNext = nextP.getTicks();
-                        if (maxCraftlimit != 0) {
-                            if (tickNext != 0) { // 超频机制
-                                // 尝试让time归1
-                                // 按比例减少maxlimit ,按最小值取craftlimit
-                                if (maxCraftlimit <= tickNext) {
-                                    tickNext = ((tickNext + 1) / maxCraftlimit) - 1;
-                                    maxCraftlimit = 1;
-                                } else {
-                                    maxCraftlimit = (maxCraftlimit / (tickNext));
-                                    tickNext = 0;
-                                }
-                            }
-                        }
-                        db.setInt(2, tickNext);
-                        db.setInt(3, maxCraftlimit);
-
-                    } else if (index2 != -1) {
-                        // 遇到了之前的数据 需要重置
+                    if (len == 0) {
                         updateMenu(inv, b, Settings.RUN);
+                        return;
                     }
+                    // 选配方：多条 recipe 时随机选一条（兼容老版多 recipe 机器）
+                    // 单条 recipe（如 GEO 合成 1 条）直接用
+                    int index2;
+                    if (len > 1) {
+                        index2 = java.util.concurrent.ThreadLocalRandom.current().nextInt(len);
+                    } else {
+                        index2 = 0;
+                    }
+                    MachineRecipe nextP = lst.get(index2);
+                    if (len > 1) {
+                        DataCache.setLastRecipe(data, index2);
+                    }
+                    if (tick == 0) {
+                        int maxMultiple = db.getInt(3);
+                        ItemStack[] toPush = nextP.getOutput();
+                        // 如果标记为随机输出（如 recipetype: GEO），从多候选里随机选一个
+                        if (nextP instanceof me.matl114.logitech.utils.UtilClass.RecipeClass.StackMachineRecipe smr
+                                && smr.isRandomOutput() && toPush.length > 1) {
+                            toPush = new ItemStack[]{ toPush[java.util.concurrent.ThreadLocalRandom.current().nextInt(toPush.length)].clone() };
+                        }
+                        if (maxMultiple == 1) {
+                            CraftUtils.pushItems(toPush, inv, getOutputSlots(), CRAFT_PROVIDER);
+                        } else {
+
+                            CraftUtils.multiPushItems(
+                                    toPush, inv, getOutputSlots(), maxMultiple, CRAFT_PROVIDER);
+                        }
+                    }
+                    int maxCraftlimit = getCraftLimit(b, inv);
+                    int tickNext = nextP.getTicks();
+                    if (maxCraftlimit != 0) {
+                        if (tickNext != 0) { // 超频机制
+                            // 尝试让time归1
+                            // 按比例减少maxlimit ,按最小值取craftlimit
+                            if (maxCraftlimit <= tickNext) {
+                                tickNext = ((tickNext + 1) / maxCraftlimit) - 1;
+                                maxCraftlimit = 1;
+                            } else {
+                                maxCraftlimit = (maxCraftlimit / (tickNext));
+                                tickNext = 0;
+                            }
+                        }
+                    }
+                    db.setInt(2, tickNext);
+                    db.setInt(3, maxCraftlimit);
+
                 } else {
                     db.setInt(2, tick - 1);
                 }

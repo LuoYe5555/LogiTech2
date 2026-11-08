@@ -1,4 +1,5 @@
 options:
+  # 自动更新: 从GitHub比对最新构建号, 不一致自动下载新jar, 重启服务器后替换加载
   auto-update: false
   test: false
   #慎用

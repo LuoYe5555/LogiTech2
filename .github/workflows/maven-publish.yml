@@ -29,7 +29,7 @@ jobs:
           cache: maven
 
       - name: Build with Maven
-        run: mvn -B -ntp clean package
+        run: mvn -B -ntp clean package -Dbuild.sha="$(git rev-parse --short=7 "${GITHUB_SHA}")"
 
       - name: Prepare tag name from commit message
         id: tag

@@ -11,11 +11,15 @@ description: Logical Slimefun4-Addon To Make A Better World
 main: me.matl114.logitech.MyAddon
 
 ## 你可以更改为你的项目仓库地址，或者你的个人网站。你也可以移除此项目。
-website: https://github.com/m1919810/LogiTech
+website: https://github.com/LuoYe5555/LogiTech2
 
 ## 该值将在构建时被自动替换为pom.xml中定义的版本。
 ## 不要更改此项目。
 version: ${project.version}
+
+## 构建时注入的commit短哈希，用于自动更新比对，本地构建默认dev。
+## 不要更改此项目。
+build: ${build.sha}
 
 ## 这是运行该附属所需的最低MC版本。
 api-version: '1.21'

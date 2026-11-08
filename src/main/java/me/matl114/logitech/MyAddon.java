@@ -20,6 +20,7 @@ import me.matl114.logitech.core.Registries.MultiBlockTypes;
 import me.matl114.logitech.core.Registries.RecipeSupporter;
 import me.matl114.logitech.listeners.ListenerManager;
 import me.matl114.logitech.listeners.ProtectionManager;
+import me.matl114.logitech.manager.AutoUpdater;
 import me.matl114.logitech.manager.EquipmentFUManager;
 import me.matl114.logitech.manager.RadiationRegionManager;
 import me.matl114.logitech.manager.Schedules;
@@ -28,7 +29,6 @@ import me.matl114.logitech.utils.UtilClass.CommandClass.LogitechMain;
 import me.matl114.logitech.utils.UtilClass.MultiBlockClass.MultiBlockService;
 import me.matl114.matlib.core.AddonInitialization;
 import me.matl114.matlib.utils.command.commandGroup.AbstractMainCommand;
-import net.guizhanss.guizhanlibplugin.updater.GuizhanUpdater;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -54,7 +54,6 @@ public class MyAddon extends JavaPlugin implements SlimefunAddon {
 
     public static String username;
     public static String repo;
-    public static String branch;
     private static AbstractMainCommand command;
     private static AddonInitialization matlibInstance;
 
@@ -62,9 +61,8 @@ public class MyAddon extends JavaPlugin implements SlimefunAddon {
     public static SupportedPluginManager supportedPluginManager;
 
     static {
-        username = "m1919810";
-        repo = "LogiTech";
-        branch = "master";
+        username = "LuoYe5555";
+        repo = "LogiTech2";
     }
 
     @Override
@@ -88,11 +86,11 @@ public class MyAddon extends JavaPlugin implements SlimefunAddon {
                 .cast();
         manager = getServer().getPluginManager();
         checkVersion();
-        // 从 config.yml 中读取插件配置
+        // 从 config.yml 中读取插件配置(默认开启自动更新)
         Config cfg = new Config(this);
 
-        if (cfg.getBoolean("options.auto-update")) {
-            tryUpdate();
+        if (!cfg.contains("options.auto-update") || cfg.getBoolean("options.auto-update")) {
+            AutoUpdater.start(this);
         }
         // 你可以在这里添加自动更新功能
         //        }if(cfg.getBoolean("options.test")||testmod) {
@@ -176,12 +174,6 @@ public class MyAddon extends JavaPlugin implements SlimefunAddon {
         Debug.logger("附属特性注册完毕");
         // test
 
-    }
-
-    public void tryUpdate() {
-        if (getDescription().getVersion().startsWith("Build")) {
-            GuizhanUpdater.start(this, getFile(), username, repo, branch);
-        }
     }
 
     public void checkVersion() {

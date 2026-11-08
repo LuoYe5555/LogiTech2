@@ -12,6 +12,8 @@
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.test.skip>true</maven.test.skip>
+        <!-- 本地构建默认dev, CI构建时通过 -Dbuild.sha=<commit短哈希> 注入, 用于自动更新比对 -->
+        <build.sha>dev</build.sha>
     </properties>
 
     <repositories>

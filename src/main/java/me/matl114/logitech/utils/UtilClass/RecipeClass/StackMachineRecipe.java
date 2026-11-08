@@ -15,6 +15,12 @@ public class StackMachineRecipe extends MachineRecipe {
      */
     private Set<Integer> noConsumeInputs = Collections.emptySet();
 
+    /**
+     * 标记输出为多候选随机（如 recipetype: GEO）
+     * 运行时从 output[] 里随机选一个产出，而不是全部产出
+     */
+    private boolean randomOutput = false;
+
     public StackMachineRecipe(int ticks, ItemStack[] inputs, ItemStack[] outputs) {
         super(0, inputs, outputs);
         this.setTicks(ticks);
@@ -26,6 +32,15 @@ public class StackMachineRecipe extends MachineRecipe {
         if (noConsumeInputs != null && !noConsumeInputs.isEmpty()) {
             this.noConsumeInputs = noConsumeInputs;
         }
+    }
+
+    public boolean isRandomOutput() {
+        return randomOutput;
+    }
+
+    public StackMachineRecipe setRandomOutput(boolean randomOutput) {
+        this.randomOutput = randomOutput;
+        return this;
     }
 
     public Set<Integer> getNoConsumeInputs() {

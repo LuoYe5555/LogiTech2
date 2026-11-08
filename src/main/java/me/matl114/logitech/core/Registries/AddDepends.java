@@ -516,15 +516,19 @@ public class AddDepends {
                                 AddItem.ABSTRACT_INGOT));
                 ReflectUtils.invokeSetRecursively(INFINITY_GEOQURRY, "ticksPerOutput", 6);
                 ReflectUtils.invokeSetRecursively(INFINITY_GEOQURRY, "energyPerTick", 4500);
-                // 包装地理资源机器以提供显示配方
-                INFINITY_GEOQURRY = (SlimefunItem) me.matl114.logitech.core.Machines.GEOMachines.GeoResourceMachineWrapper.createWrapper(INFINITY_GEOQURRY);
                 INFINITY_GEOQURRY.register(plugin);
+                me.matl114.logitech.utils.Debug.logger("INFINITY_GEOQURRY registered OK: " + INFINITY_GEOQURRY.getId());
             }
         } catch (Throwable e) {
-
+            me.matl114.logitech.utils.Debug.logger("INFINITY_GEOQURRY register failed: " + e.getMessage());
+            me.matl114.logitech.utils.Debug.debug(e);
         }
         try {
             if (hasInfiniteExpansion) {
+                if (SlimefunItem.getById("GEO_QUARRY") == null) {
+                    me.matl114.logitech.utils.Debug.logger("ANNIHILATION_GEOQURRY skipped: GEO_QUARRY not found in registry");
+                    return;
+                }
                 Class infinityGeoMiner = SlimefunItem.getById("GEO_QUARRY").getClass();
                 Constructor constructor = ReflectUtils.getSuitableConstructor(
                         infinityGeoMiner,
@@ -548,8 +552,6 @@ public class AddDepends {
                 ReflectUtils.invokeSetRecursively(ANNIHILATION_GEOQURRY, "ticksPerOutput", 1);
                 ReflectUtils.invokeSetRecursively(ANNIHILATION_GEOQURRY, "energyPerTick", 7500);
                 OptimizedGeoQuarry.optimizeTickMethod(infinityGeoMiner);
-                // 包装地理资源机器以提供显示配方
-                ANNIHILATION_GEOQURRY = (SlimefunItem) me.matl114.logitech.core.Machines.GEOMachines.GeoResourceMachineWrapper.createWrapper(ANNIHILATION_GEOQURRY);
                 ANNIHILATION_GEOQURRY.register(plugin);
             }
         } catch (Throwable e) {

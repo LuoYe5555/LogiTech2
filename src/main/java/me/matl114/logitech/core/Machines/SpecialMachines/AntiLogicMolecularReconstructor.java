@@ -193,7 +193,11 @@ public class AntiLogicMolecularReconstructor extends AbstractMachine {
         if (random.nextDouble() < 0.3) {
             Material[] materials = Material.values();
             Material randomMaterial = materials[random.nextInt(materials.length)];
-            int amount = random.nextInt(65);
+            // 数量必须>=1，0数量的物品在Paper 26.x下视为空物品(无ItemMeta)，会导致clone失败
+            int amount = random.nextInt(64) + 1;
+            if (randomMaterial.isAir() || !randomMaterial.isItem()) {
+                randomMaterial = Material.STONE;
+            }
             return new ItemStack(randomMaterial, amount);
         } else {
             if (slimefunItems.isEmpty()) {
@@ -207,7 +211,8 @@ public class AntiLogicMolecularReconstructor extends AbstractMachine {
             if (!slimefunItems.isEmpty()) {
                 SlimefunItem randomSF = slimefunItems.get(random.nextInt(slimefunItems.size()));
                 ItemStack output = randomSF.getItem().clone();
-                int amount = random.nextInt(65);
+                // 数量必须>=1，0数量的物品在Paper 26.x下视为空物品，SlimefunItemStack.clone()会因ItemMeta为null抛异常
+                int amount = random.nextInt(64) + 1;
                 output.setAmount(Math.min(amount, output.getMaxStackSize()));
                 return output;
             }

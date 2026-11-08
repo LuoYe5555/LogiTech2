@@ -170,8 +170,6 @@ C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\core\Machines
 C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\core\Machines\Electrics\SimulateTestGenerator.java
 C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\core\Machines\Electrics\TestGenerator.java
 C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\core\Machines\EmptyMachineSample.java
-C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\core\Machines\GEOMachines\GeoResourceMachines.java
-C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\core\Machines\GEOMachines\GeoResourceMachineWrapper.java
 C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\core\Machines\ManualMachines\AdvancedManual.java
 C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\core\Machines\ManualMachines\FinalManual.java
 C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\core\Machines\ManualMachines\ManualCrafter.java
@@ -240,6 +238,7 @@ C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\listeners\Lis
 C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\listeners\Listeners\TickBlockListener.java
 C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\listeners\ProtectionManager.java
 C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\listeners\ProtectionModule\StorageWorldProtection.java
+C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\manager\AutoUpdater.java
 C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\manager\EffectTickManager.java
 C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\manager\EquipmentFUManager.java
 C:\Users\30955\Desktop\LogiTech2\src\main\java\me\matl114\logitech\manager\PostSetupTasks.java
